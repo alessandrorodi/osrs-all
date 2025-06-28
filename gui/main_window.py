@@ -135,6 +135,7 @@ class OSRSBotGUI:
         self.create_dashboard_tab()
         self.create_bots_tab()
         self.create_vision_tab()
+        self.create_advanced_safety_tab()
         self.create_performance_tab()
         self.create_logs_tab()
         self.create_templates_tab()
@@ -398,6 +399,22 @@ class OSRSBotGUI:
         
         self.vision_performance = ctk.CTkLabel(perf_frame, text="Performance: Ready")
         self.vision_performance.pack(pady=5)
+    
+    def create_advanced_safety_tab(self):
+        """Create the advanced safety tab"""
+        try:
+            from gui.tabs.advanced_safety_tab import create_advanced_safety_tab
+            safety_tab = self.notebook.add("🛡️ Advanced Safety")
+            self.advanced_safety_tab = create_advanced_safety_tab(safety_tab)
+        except ImportError as e:
+            logger.warning(f"Advanced Safety tab not available: {e}")
+            # Create a placeholder tab
+            safety_tab = self.notebook.add("🛡️ Advanced Safety")
+            ctk.CTkLabel(
+                safety_tab,
+                text="Advanced Safety System\n(Requires additional dependencies)",
+                font=ctk.CTkFont(size=16)
+            ).pack(expand=True)
     
     def create_performance_tab(self):
         """Create the performance monitoring tab"""
