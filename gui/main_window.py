@@ -135,6 +135,7 @@ class OSRSBotGUI:
         self.create_dashboard_tab()
         self.create_bots_tab()
         self.create_vision_tab()
+        self.create_navigation_tab()
         self.create_performance_tab()
         self.create_logs_tab()
         self.create_templates_tab()
@@ -398,6 +399,100 @@ class OSRSBotGUI:
         
         self.vision_performance = ctk.CTkLabel(perf_frame, text="Performance: Ready")
         self.vision_performance.pack(pady=5)
+    
+    def create_navigation_tab(self):
+        """Create the navigation tab with minimap analysis and pathfinding"""
+        nav_tab = self.notebook.add("🧭 Navigation")
+        
+        # Try to import navigation components
+        try:
+            # Import required for navigation fallback methods
+            from gui.widgets.navigation_panel import NavigationPanel
+            
+            # Create navigation panel
+            self.navigation_panel = NavigationPanel(nav_tab, width=780, height=580)
+            self.navigation_panel.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            # Store reference for cleanup
+            if not hasattr(self, 'navigation_components'):
+                self.navigation_components = []
+            self.navigation_components.append(self.navigation_panel)
+            
+        except ImportError as e:
+            # Fallback UI if navigation components not available
+            error_frame = ctk.CTkFrame(nav_tab)
+            error_frame.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            ctk.CTkLabel(
+                error_frame,
+                text="🧭 Navigation System",
+                font=ctk.CTkFont(size=24, weight="bold")
+            ).pack(pady=20)
+            
+            ctk.CTkLabel(
+                error_frame,
+                text="Navigation components not available",
+                font=ctk.CTkFont(size=16)
+            ).pack(pady=10)
+            
+            ctk.CTkLabel(
+                error_frame,
+                text="Please install required dependencies:",
+                font=ctk.CTkFont(size=14)
+            ).pack(pady=5)
+            
+            deps_text = """
+Required dependencies:
+• opencv-python>=4.8.0
+• numpy>=1.24.0
+• customtkinter>=5.0.0
+• PIL (Pillow)
+
+Features when available:
+• Live minimap analysis with YOLOv8 integration
+• A* pathfinding with obstacle avoidance  
+• Multi-floor navigation (stairs, ladders, teleports)
+• Real-time processing at 60fps (RTX 4090 optimized)
+• Danger zone detection and safe route planning
+• Interactive minimap with path visualization
+• Movement efficiency metrics and debug tools
+            """
+            
+            deps_display = ctk.CTkTextbox(error_frame, height=300, width=700)
+            deps_display.pack(pady=20, padx=20)
+            deps_display.insert("1.0", deps_text.strip())
+            deps_display.configure(state="disabled")
+            
+            # Manual controls as fallback
+            manual_frame = ctk.CTkFrame(error_frame)
+            manual_frame.pack(fill="x", padx=20, pady=10)
+            
+            ctk.CTkLabel(
+                manual_frame,
+                text="Manual Navigation Tools",
+                font=ctk.CTkFont(size=16, weight="bold")
+            ).pack(pady=5)
+            
+            tools_frame = ctk.CTkFrame(manual_frame)
+            tools_frame.pack(fill="x", pady=10)
+            
+            ctk.CTkButton(
+                tools_frame,
+                text="📷 Capture Minimap",
+                command=self.capture_minimap_manual
+            ).pack(side="left", padx=5)
+            
+            ctk.CTkButton(
+                tools_frame,
+                text="🗺️ Analyze Image",
+                command=self.analyze_image_manual
+            ).pack(side="left", padx=5)
+            
+            ctk.CTkButton(
+                tools_frame,
+                text="📊 Show Stats",
+                command=self.show_navigation_stats
+            ).pack(side="left", padx=5)
     
     def create_performance_tab(self):
         """Create the performance monitoring tab"""
@@ -1047,6 +1142,21 @@ class OSRSBotGUI:
     def import_template(self): pass
     def refresh_templates(self): pass
     def on_template_select(self, event): pass
+    # Navigation fallback methods
+    def capture_minimap_manual(self):
+        """Manual minimap capture for fallback"""
+        logger.info("Manual minimap capture requested")
+        messagebox.showinfo("Navigation", "Minimap capture would be performed here when dependencies are available")
+    
+    def analyze_image_manual(self):
+        """Manual image analysis for fallback"""
+        logger.info("Manual image analysis requested")
+        messagebox.showinfo("Navigation", "Image analysis would be performed here when dependencies are available")
+    
+    def show_navigation_stats(self):
+        """Show navigation statistics for fallback"""
+        logger.info("Navigation statistics requested")
+        messagebox.showinfo("Navigation", "Navigation statistics would be displayed here when dependencies are available")
 
 
 def main():

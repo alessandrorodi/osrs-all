@@ -40,6 +40,13 @@ def create_dashboard_tab(self):
     self.bot_count = ctk.CTkLabel(status_grid, text="🤖 Active Bots: 0")
     self.bot_count.grid(row=1, column=1, padx=20, pady=5, sticky="w")
     
+    # Add navigation status
+    self.navigation_status = ctk.CTkLabel(status_grid, text="🧭 Navigation: Ready")
+    self.navigation_status.grid(row=2, column=0, padx=20, pady=5, sticky="w")
+    
+    self.pathfinding_status = ctk.CTkLabel(status_grid, text="🗺️ Pathfinding: Ready")
+    self.pathfinding_status.grid(row=2, column=1, padx=20, pady=5, sticky="w")
+    
     # Quick stats
     stats_frame = ctk.CTkFrame(dashboard)
     stats_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -184,6 +191,100 @@ def create_vision_tab(self):
     
     self.detection_results = ctk.CTkTextbox(results_frame, height=100)
     self.detection_results.pack(fill="x", padx=10, pady=10)
+
+
+def create_navigation_tab(self):
+    """Create the navigation tab with minimap analysis and pathfinding"""
+    nav_tab = self.notebook.add("🧭 Navigation")
+    
+    # Try to import navigation components
+    try:
+        from gui.widgets.navigation_panel import NavigationPanel
+        
+        # Create navigation panel
+        self.navigation_panel = NavigationPanel(nav_tab, width=780, height=580)
+        self.navigation_panel.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Store reference for cleanup
+        if not hasattr(self, 'navigation_components'):
+            self.navigation_components = []
+        self.navigation_components.append(self.navigation_panel)
+        
+    except ImportError as e:
+        # Fallback UI if navigation components not available
+        error_frame = ctk.CTkFrame(nav_tab)
+        error_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            error_frame,
+            text="🧭 Navigation System",
+            font=ctk.CTkFont(size=24, weight="bold")
+        ).pack(pady=20)
+        
+        ctk.CTkLabel(
+            error_frame,
+            text="Navigation components not available",
+            font=ctk.CTkFont(size=16)
+        ).pack(pady=10)
+        
+        ctk.CTkLabel(
+            error_frame,
+            text="Please install required dependencies:",
+            font=ctk.CTkFont(size=14)
+        ).pack(pady=5)
+        
+        deps_text = """
+Required dependencies:
+• opencv-python>=4.8.0
+• numpy>=1.24.0
+• customtkinter>=5.0.0
+• PIL (Pillow)
+
+Features when available:
+• Live minimap analysis with YOLOv8 integration
+• A* pathfinding with obstacle avoidance  
+• Multi-floor navigation (stairs, ladders, teleports)
+• Real-time processing at 60fps (RTX 4090 optimized)
+• Danger zone detection and safe route planning
+• Interactive minimap with path visualization
+• Movement efficiency metrics and debug tools
+        """
+        
+        deps_display = ctk.CTkTextbox(error_frame, height=300, width=700)
+        deps_display.pack(pady=20, padx=20)
+        deps_display.insert("1.0", deps_text.strip())
+        deps_display.configure(state="disabled")
+        
+        # Manual controls as fallback
+        manual_frame = ctk.CTkFrame(error_frame)
+        manual_frame.pack(fill="x", padx=20, pady=10)
+        
+        ctk.CTkLabel(
+            manual_frame,
+            text="Manual Navigation Tools",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).pack(pady=5)
+        
+        tools_frame = ctk.CTkFrame(manual_frame)
+        tools_frame.pack(fill="x", pady=10)
+        
+        ctk.CTkButton(
+            tools_frame,
+            text="📷 Capture Minimap",
+            command=lambda: self.capture_minimap_manual()
+        ).pack(side="left", padx=5)
+        
+        ctk.CTkButton(
+            tools_frame,
+            text="🗺️ Analyze Image",
+            command=lambda: self.analyze_image_manual()
+        ).pack(side="left", padx=5)
+        
+        ctk.CTkButton(
+            tools_frame,
+            text="📊 Show Stats",
+            command=lambda: self.show_navigation_stats()
+        ).pack(side="left", padx=5)
 
 
 def create_performance_tab(self):
