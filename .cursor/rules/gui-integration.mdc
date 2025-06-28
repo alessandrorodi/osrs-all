@@ -1,0 +1,293 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# OSRS Bot GUI Integration Standards
+
+## 🖥️ Mandatory GUI Integration Rules
+
+### EVERY feature MUST have GUI access - NO command line only features
+
+## 🏗️ GUI Architecture Requirements
+
+### Follow Existing GUI Structure:
+All GUI components must integrate with the existing structure in [gui/](mdc:gui):
+
+```
+gui/
+├── gui_app.py              # Main application 
+├── main_window.py          # Main window class
+├── tabs.py                 # Tab management
+├── handlers.py             # Event handlers
+├── widgets/                # Custom widgets
+│   └── [feature]_widgets.py
+└── tabs/                   # Tab implementations
+    └── [feature]_tab.py
+```
+
+### GUI Integration Checklist:
+Before implementing ANY feature, ensure it includes:
+- [ ] GUI tab or widget for user interaction
+- [ ] Real-time status display
+- [ ] Configuration interface
+- [ ] Visual feedback and progress indicators
+- [ ] Error handling with user-friendly messages
+
+## 🎮 OSRS GUI Requirements
+
+### Main Dashboard Integration:
+Every new feature MUST add status indicators to the main dashboard:
+
+```python
+# Example: Add your feature status to main dashboard
+def update_dashboard_status(self):
+    self.dashboard.add_status_indicator(
+        name="OSRS Vision",
+        status="Active",
+        details="Processing at 45 FPS",
+        color="green"
+    )
+```
+
+### Tab Implementation Standards:
+Each major feature requires its own tab following this pattern:
+
+```python
+# gui/tabs/[feature]_tab.py
+import customtkinter as ctk
+from gui.widgets.base_widget import BaseWidget
+
+class OSRSFeatureTab(BaseWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setup_ui()
+        self.setup_callbacks()
+    
+    def setup_ui(self):
+        """Create the tab UI elements"""
+        # Status display
+        self.status_frame = ctk.CTkFrame(self)
+        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Ready")
+        
+        # Configuration panel
+        self.config_frame = ctk.CTkFrame(self)
+        
+        # Controls
+        self.controls_frame = ctk.CTkFrame(self)
+        self.start_button = ctk.CTkButton(self.controls_frame, text="Start", command=self.start_feature)
+        
+    def setup_callbacks(self):
+        """Setup event handlers"""
+        pass
+        
+    def start_feature(self):
+        """Start the feature with GUI feedback"""
+        pass
+```
+
+## 🔄 Real-Time Updates Requirements
+
+### All GUI elements MUST show real-time data:
+
+#### 1. Status Indicators:
+```python
+# Update status every 100ms
+def update_status_display(self):
+    self.status_label.configure(text=f"Detection: {self.detection_count}/s")
+    self.after(100, self.update_status_display)
+```
+
+#### 2. Progress Indicators:
+```python
+# Show progress for long-running operations
+self.progress_bar = ctk.CTkProgressBar(self)
+self.progress_bar.set(progress_value)  # 0.0 to 1.0
+```
+
+#### 3. Live Data Visualization:
+```python
+# Example: Live OSRS screenshot display with overlays
+def update_vision_display(self, screenshot, detections):
+    # Draw bounding boxes on screenshot
+    annotated_image = self.draw_detections(screenshot, detections)
+    
+    # Update GUI display
+    self.image_display.configure(image=annotated_image)
+```
+
+## 📊 OSRS-Specific GUI Components
+
+### Required GUI Elements for OSRS Features:
+
+#### 1. OSRS Client Integration:
+```python
+# Live OSRS client display
+self.client_viewer = OSRSClientViewer(self)
+self.client_viewer.show_detections = True
+self.client_viewer.show_overlays = True
+```
+
+#### 2. Game State Display:
+```python
+# Real-time OSRS game state
+self.game_state_panel = GameStatePanel(self)
+self.game_state_panel.show_hp = True
+self.game_state_panel.show_prayer = True
+self.game_state_panel.show_inventory = True
+```
+
+#### 3. Performance Monitoring:
+```python
+# Performance metrics display
+self.performance_panel = PerformancePanel(self)
+self.performance_panel.show_fps = True
+self.performance_panel.show_gpu_usage = True
+```
+
+## 🎛️ Configuration Interface Requirements
+
+### Every OSRS feature MUST include GUI configuration:
+
+#### 1. User Settings Panel:
+```python
+class OSRSConfigPanel(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+        
+        # Detection sensitivity
+        self.sensitivity_slider = ctk.CTkSlider(self, from_=0.1, to=1.0)
+        
+        # OSRS client settings
+        self.client_mode = ctk.CTkOptionMenu(self, values=["Fixed", "Resizable", "Fullscreen"])
+        
+        # Safety settings
+        self.safety_level = ctk.CTkOptionMenu(self, values=["Paranoid", "Cautious", "Normal"])
+```
+
+#### 2. Real-time Configuration:
+- Settings changes must apply immediately (no restart required)
+- Visual feedback for configuration changes
+- Validation of configuration values
+
+## 🚨 Error Handling in GUI
+
+### User-Friendly Error Display:
+```python
+def handle_error(self, error_message):
+    """Display errors in GUI, not console"""
+    error_dialog = ctk.CTkToplevel(self)
+    error_dialog.title("OSRS Bot Error")
+    
+    error_label = ctk.CTkLabel(error_dialog, text=error_message, wraplength=400)
+    error_label.pack(pady=20)
+    
+    ok_button = ctk.CTkButton(error_dialog, text="OK", command=error_dialog.destroy)
+    ok_button.pack(pady=10)
+```
+
+### Error Recovery Options:
+- Automatic retry mechanisms with GUI feedback
+- Manual intervention options through GUI
+- Clear instructions for user actions
+
+## 📝 GUI Documentation Requirements
+
+### Every GUI component must include:
+
+#### 1. Tooltips for all controls:
+```python
+# Add helpful tooltips
+self.detection_slider = ctk.CTkSlider(self, from_=0.1, to=1.0)
+self.create_tooltip(self.detection_slider, "Adjust OSRS object detection sensitivity")
+```
+
+#### 2. Help system integration:
+```python
+# Help button for complex features
+self.help_button = ctk.CTkButton(self, text="?", command=self.show_help)
+
+def show_help(self):
+    """Show context-sensitive help"""
+    help_text = """
+    OSRS Combat AI Help:
+    - Use sensitivity slider to adjust NPC detection
+    - Safety level controls anti-detection measures
+    - Monitor performance tab for optimization
+    """
+    self.show_help_dialog(help_text)
+```
+
+## 🔧 GUI Testing Requirements
+
+### GUI components MUST include tests:
+
+#### 1. GUI Unit Tests:
+```python
+def test_osrs_tab_creation():
+    """Test OSRS tab creates properly"""
+    tab = OSRSFeatureTab(None)
+    assert tab.start_button is not None
+    assert tab.status_label is not None
+```
+
+#### 2. User Interaction Tests:
+```python
+def test_start_button_click():
+    """Test start button functionality"""
+    tab = OSRSFeatureTab(None)
+    tab.start_button.invoke()  # Simulate click
+    assert tab.feature_running == True
+```
+
+#### 3. Real-time Update Tests:
+```python
+def test_status_updates():
+    """Test real-time status updates"""
+    tab = OSRSFeatureTab(None)
+    tab.update_status_display()
+    assert "Status:" in tab.status_label.cget("text")
+```
+
+## 🎯 OSRS GUI Integration Examples
+
+### Example: OSRS Vision Feature GUI Integration:
+```python
+class OSRSVisionTab(BaseWidget):
+    def setup_ui(self):
+        # Live OSRS client feed
+        self.client_display = OSRSClientDisplay(self)
+        
+        # Detection controls
+        self.detection_frame = ctk.CTkFrame(self)
+        self.npc_detection_toggle = ctk.CTkSwitch(self.detection_frame, text="Detect NPCs")
+        self.item_detection_toggle = ctk.CTkSwitch(self.detection_frame, text="Detect Items")
+        
+        # Performance display
+        self.performance_frame = ctk.CTkFrame(self)
+        self.fps_label = ctk.CTkLabel(self.performance_frame, text="FPS: 0")
+        self.detection_count_label = ctk.CTkLabel(self.performance_frame, text="Detections: 0")
+        
+        # Configuration
+        self.config_frame = ctk.CTkFrame(self)
+        self.confidence_slider = ctk.CTkSlider(self.config_frame, from_=0.1, to=1.0)
+```
+
+## ⚠️ GUI Integration Violations
+
+### FORBIDDEN - These will result in code rejection:
+- ❌ Features that only work from command line
+- ❌ Configuration that requires editing files
+- ❌ Status information only in logs
+- ❌ Error messages only in console
+- ❌ No visual feedback for long operations
+
+### REQUIRED - These must be present:
+- ✅ Full GUI control of all features
+- ✅ Real-time visual feedback
+- ✅ User-friendly error handling
+- ✅ Configuration through GUI
+- ✅ Status display in main dashboard
+
+**ALL features must be fully accessible and controllable through the GUI**
+

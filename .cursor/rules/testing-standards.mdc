@@ -1,0 +1,224 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# OSRS Bot Testing Standards
+
+## 🧪 Mandatory Testing Framework
+
+### Test Structure Requirements
+Every module MUST include tests in the following structure:
+```
+tests/
+├── test_[module_name].py          # Unit tests
+├── integration/
+│   └── test_[module]_integration.py  # Integration tests
+├── osrs_screenshots/               # Test images
+│   ├── combat/
+│   ├── skilling/
+│   └── interfaces/
+└── fixtures/                      # Test data
+    └── [module]_fixtures.py
+```
+
+## 🎮 OSRS-Specific Testing Requirements
+
+### Screenshot Test Data
+1. **Mandatory test screenshots for vision modules**:
+   - Different graphics settings (low, medium, high, ultra)
+   - Fixed mode (765x503) and resizable mode screenshots
+   - Multiple OSRS locations for the same feature
+   - Different client overlays (RuneLite plugins on/off)
+
+2. **Screenshot naming convention**:
+   ```
+   tests/osrs_screenshots/
+   ├── combat_cow_fixed_low.png
+   ├── combat_cow_resizable_high.png  
+   ├── inventory_full_runelite.png
+   └── minimap_lumbridge_castle.png
+   ```
+
+### Performance Testing Standards
+ALL vision processing functions MUST meet these benchmarks:
+- **Detection functions**: < 50ms per frame (RTX 4090)
+- **OCR functions**: < 100ms per text region
+- **Game state analysis**: < 200ms per complete analysis
+- **Memory usage**: < 500MB additional per module
+
+### Test Implementation Requirements
+
+#### 1. Unit Tests - Test Individual Functions
+```python
+# Example: tests/test_osrs_ocr.py
+import pytest
+from vision.osrs_ocr import extract_hp_value
+
+def test_extract_hp_value():
+    """Test HP extraction from OSRS HP orb"""
+    # Load test image from fixtures
+    test_image = load_test_screenshot("hp_orb_75.png")
+    
+    # Test function
+    result = extract_hp_value(test_image)
+    
+    # Assert OSRS-specific expectations
+    assert result == 75
+    assert isinstance(result, int)
+    assert 1 <= result <= 99  # Valid OSRS HP range
+
+def test_extract_hp_value_edge_cases():
+    """Test edge cases like 1 HP, 99 HP, etc."""
+    test_cases = [
+        ("hp_orb_1.png", 1),
+        ("hp_orb_99.png", 99),
+        ("hp_orb_poisoned.png", 42)  # Green HP orb
+    ]
+    
+    for image_file, expected in test_cases:
+        image = load_test_screenshot(image_file)
+        result = extract_hp_value(image)
+        assert result == expected
+```
+
+#### 2. Integration Tests - Test System Interactions
+```python
+# Example: tests/integration/test_vision_integration.py
+def test_yolo_with_ocr_integration():
+    """Test YOLOv8 + OCR working together"""
+    screenshot = load_test_screenshot("combat_scene_full.png")
+    
+    # Test integrated detection
+    yolo_detections = yolo_detector.detect_npcs(screenshot)
+    ocr_results = ocr_engine.read_text_regions(screenshot)
+    game_state = analyze_game_state(screenshot, yolo_detections, ocr_results)
+    
+    # Assert integrated results
+    assert len(yolo_detections) > 0
+    assert game_state.current_activity == "combat"
+    assert game_state.target_npc is not None
+```
+
+#### 3. Performance Tests - Validate Speed Requirements  
+```python
+def test_vision_performance():
+    """Ensure vision processing meets real-time requirements"""
+    screenshot = load_test_screenshot("typical_gameplay.png")
+    
+    # Measure performance
+    import time
+    start_time = time.time()
+    
+    result = process_game_state(screenshot)
+    
+    processing_time = (time.time() - start_time) * 1000  # Convert to ms
+    
+    # Assert performance requirements
+    assert processing_time < 200, f"Processing took {processing_time}ms, must be < 200ms"
+    assert result is not None
+```
+
+## 🏗️ Test Infrastructure Requirements
+
+### Required Test Utilities
+Create these utilities in `tests/utils/`:
+
+```python
+# tests/utils/test_helpers.py
+def load_test_screenshot(filename):
+    """Load OSRS screenshot from test fixtures"""
+    pass
+
+def assert_osrs_coordinates(coords):
+    """Validate coordinates are within OSRS client bounds"""
+    pass
+
+def compare_detection_results(expected, actual, tolerance=0.1):
+    """Compare vision detection results with tolerance"""
+    pass
+```
+
+### Mock OSRS Game State
+```python  
+# tests/fixtures/game_state_fixtures.py
+def create_combat_game_state():
+    """Create mock game state for combat testing"""
+    return GameState(
+        current_activity="combat",
+        hp=75,
+        prayer=100,
+        target_npc="Cow",
+        inventory_items=["Cowhide", "Raw beef"]
+    )
+```
+
+## 📊 Test Coverage Requirements
+
+### Minimum Coverage Standards:
+- **Vision modules**: 90% code coverage
+- **AI decision modules**: 85% code coverage  
+- **GUI components**: 80% code coverage
+- **Utility functions**: 95% code coverage
+
+### Critical Path Testing:
+MUST test these scenarios for every module:
+1. **Happy path**: Normal OSRS gameplay scenarios
+2. **Edge cases**: Unusual game states (1 HP, empty inventory, etc.)
+3. **Error handling**: Invalid inputs, corrupted screenshots
+4. **Performance limits**: Stress testing with rapid inputs
+
+## 🚨 Test Execution Requirements
+
+### Before Code Submission:
+```bash
+# ALL these commands must pass:
+pytest tests/ -v                    # All unit tests
+pytest tests/integration/ -v        # Integration tests  
+pytest tests/performance/ -v        # Performance tests
+pytest --cov=core --cov-report=html # Coverage report
+```
+
+### Automated Test Standards:
+1. **Tests must be deterministic** - No random failures
+2. **Tests must be fast** - Full test suite < 2 minutes  
+3. **Tests must be isolated** - No dependencies between tests
+4. **Tests must clean up** - No leftover files or processes
+
+## 🎯 OSRS Test Scenarios
+
+### Required Test Scenarios by Module:
+
+#### Computer Vision Tests:
+- [ ] Different OSRS graphics settings
+- [ ] Fixed vs resizable client modes
+- [ ] RuneLite with/without plugins
+- [ ] Different lighting conditions in game
+- [ ] Multiple NPCs of same type
+- [ ] Overlapping UI elements
+
+#### Game State Tests:
+- [ ] All OSRS skills and activities
+- [ ] Different combat styles (melee, ranged, magic)
+- [ ] Banking and inventory management
+- [ ] Quest dialogue and interfaces
+- [ ] PvP vs PvE scenarios
+
+#### Performance Tests:
+- [ ] Sustained gameplay (30+ minutes)
+- [ ] Memory leak detection
+- [ ] GPU utilization optimization
+- [ ] Multiple bot instances
+
+## ⚠️ Test Failure Policy
+
+### Zero Tolerance for:
+- Tests that fail on different machines
+- Tests that depend on external OSRS servers  
+- Tests without proper OSRS context
+- Tests that take longer than specified limits
+
+### Test failures WILL RESULT IN CODE REJECTION
+
+**Every commit must pass ALL tests - NO EXCEPTIONS**
+

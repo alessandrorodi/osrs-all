@@ -1,0 +1,181 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# OSRS Bot Development Rules
+
+## 🎮 OSRS Knowledge Requirements
+
+### MANDATORY OSRS Research
+Before implementing ANY OSRS-related feature, you MUST:
+
+1. **Verify OSRS Game Mechanics**:
+   - Research current OSRS wiki for accurate information
+   - Understand game tick system (0.6 second intervals)
+   - Know exact interface locations and behaviors
+   - Verify item IDs, NPC IDs, and object IDs
+
+2. **Test Against Current Game Version**:
+   - OSRS updates weekly - verify your assumptions
+   - Check RuneLite plugin compatibility
+   - Test with different client settings (resizable, fixed, fullscreen)
+   - Validate against both F2P and P2P content
+
+3. **OSRS-Specific Terminology**:
+   - Use correct OSRS terms (GP not gold, XP not experience points)
+   - Reference correct skill names, item names, location names
+   - Use proper OSRS combat formulas and calculations
+
+## 🧪 Mandatory Testing Rules
+
+### EVERY code change MUST include:
+
+1. **Unit Tests** - Test individual functions:
+```python
+# Example required test structure
+def test_detect_hp_orb():
+    # Load test image
+    # Call detection function  
+    # Assert expected result
+    pass
+```
+
+2. **Integration Tests** - Test system interactions:
+```python 
+def test_vision_with_game_state():
+    # Test YOLOv8 + OCR + Game State integration
+    pass
+```
+
+3. **OSRS-Specific Tests**:
+   - Test with real OSRS screenshots from [data/templates/](mdc:data/templates)
+   - Test different graphics settings
+   - Test client resize scenarios
+   - Test with different OSRS locations
+
+4. **Performance Tests**:
+   - Measure processing time (must be < 100ms for real-time features)
+   - Test memory usage
+   - Validate GPU utilization on RTX 4090
+
+### Test Coverage Requirements:
+- Minimum 80% code coverage for new modules
+- All public functions must have tests
+- All OSRS-specific detection functions must have screenshot tests
+- Performance benchmarks for vision processing
+
+## 🚫 Scope Discipline Rules
+
+### DO NOT implement features unless EXPLICITLY requested:
+
+1. **Stick to the Prompt**: Only implement what was asked for
+2. **No Feature Creep**: Don't add "helpful" extra features
+3. **No Premature Optimization**: Don't optimize unless performance is specifically mentioned
+4. **No Unnecessary Dependencies**: Don't add new libraries unless required
+
+### Before adding ANY new feature, ask yourself:
+- ✅ Was this specifically requested in the prompt?
+- ✅ Is this essential for the core functionality?
+- ❌ Am I adding this because "it would be nice to have"?
+
+## 🏗️ Code Structure Requirements
+
+### Follow Existing Architecture:
+- Extend [core/bot_base.py](mdc:core/bot_base.py) for new bots
+- Use [config/settings.py](mdc:config/settings.py) for configuration
+- Follow GUI patterns in [gui/tabs.py](mdc:gui/tabs.py)
+- Use logging from [utils/logging.py](mdc:utils/logging.py)
+
+### OSRS Module Structure:
+```python
+class OSRSModule:
+    def __init__(self):
+        self.game_state = None  # Always integrate with game state
+        self.logger = get_logger(__name__)
+        
+    def process_osrs_screenshot(self, screenshot):
+        """Always process OSRS screenshots, not generic images"""
+        pass
+        
+    def validate_osrs_data(self, data):
+        """Always validate OSRS-specific data"""
+        pass
+```
+
+## 🔍 OSRS Detection Guidelines
+
+### Computer Vision Rules:
+1. **Always account for different client modes**:
+   - Fixed mode (765x503)
+   - Resizable mode (variable sizes)
+   - Fullscreen mode
+
+2. **Handle RuneLite plugins**:
+   - Account for overlays
+   - Handle different plugin configurations
+   - Test with/without GPU plugin
+
+3. **OSRS-specific detection challenges**:
+   - Similar looking NPCs (cows vs bulls)
+   - Items with similar sprites
+   - Interface elements that change position
+   - Animation states affecting detection
+
+## 🛡️ Safety and Anti-Detection Rules
+
+### OSRS Ban Prevention:
+1. **Human-like behavior is MANDATORY**:
+   - Random delays between actions
+   - Realistic mouse movements
+   - Appropriate break patterns
+
+2. **Never implement obvious bot patterns**:
+   - No pixel-perfect movements
+   - No inhuman reaction times
+   - No repetitive exact timing
+
+3. **Account for Jagex detection**:
+   - Research known detection methods
+   - Implement counter-measures
+   - Test behavioral patterns
+
+## 📝 Documentation Requirements
+
+### Every OSRS module must include:
+1. **OSRS Context**: What OSRS activity this relates to
+2. **Game State Dependencies**: What game state information is needed
+3. **OSRS Limitations**: Known limitations or edge cases
+4. **Testing Instructions**: How to test with actual OSRS client
+
+### Example Documentation:
+```python
+"""
+OSRS Combat Module
+
+OSRS Context: Handles combat with NPCs in OSRS
+Game State: Requires HP, prayer, inventory, combat tab info
+Limitations: Does not handle special attacks or prayer flicking
+Testing: Use test account at Lumbridge cows
+"""
+```
+
+## ⚠️ CRITICAL REMINDERS
+
+### Before submitting code:
+- [ ] All tests pass
+- [ ] OSRS research completed and documented
+- [ ] Only requested features implemented
+- [ ] Performance requirements met
+- [ ] OSRS safety measures included
+- [ ] Code follows existing patterns in [core/](mdc:core) and [gui/](mdc:gui)
+
+### OSRS-Specific Validation:
+- [ ] Tested with current OSRS version
+- [ ] Works with RuneLite client
+- [ ] Handles different graphics settings
+- [ ] Uses correct OSRS terminology
+- [ ] Implements appropriate anti-detection
+
+**FAILURE TO FOLLOW THESE RULES WILL RESULT IN CODE REJECTION**
+
