@@ -42,6 +42,9 @@ VISION = {
     },
 }
 
+# Alias for backward compatibility
+VISION_SETTINGS = VISION
+
 # Automation settings
 AUTOMATION = {
     "mouse": {
