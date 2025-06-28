@@ -69,7 +69,7 @@ class TestHumanMouse:
             
             assert result is True
             mock_move.assert_called_once_with(100, 100)
-        mock_sleep.assert_not_called()
+            mock_sleep.assert_not_called()
     
     @patch('pyautogui.position')
     @patch('pyautogui.moveTo')

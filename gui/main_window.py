@@ -36,6 +36,14 @@ from core.bot_base import BotBase, BotState
 from utils.logging import setup_logging, BotLogger
 from config.settings import *
 
+# Import Phase 2 AI Vision System
+try:
+    from vision.intelligent_vision import intelligent_vision, GameState, SceneType
+    AI_VISION_AVAILABLE = True
+except ImportError as e:
+    print(f"AI Vision system not available: {e}")
+    AI_VISION_AVAILABLE = False
+
 # Set theme
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -265,8 +273,26 @@ class OSRSBotGUI:
         ).pack(side="left", padx=5)
     
     def create_vision_tab(self):
-        """Create the computer vision tab"""
-        vision_tab = self.notebook.add("👁️ Vision")
+        """Create the computer vision tab with AI Vision capabilities"""
+        vision_tab = self.notebook.add("👁️ AI Vision")
+        
+        # Vision mode selector
+        mode_frame = ctk.CTkFrame(vision_tab)
+        mode_frame.pack(fill="x", padx=10, pady=10)
+        
+        ctk.CTkLabel(mode_frame, text="Vision Mode:", font=ctk.CTkFont(weight="bold")).pack(side="left", padx=10)
+        
+        self.vision_mode = ctk.CTkOptionMenu(
+            mode_frame,
+            values=["Classic CV", "AI Vision (Phase 2)", "Combined"],
+            command=self.on_vision_mode_change
+        )
+        self.vision_mode.pack(side="left", padx=5)
+        
+        if AI_VISION_AVAILABLE:
+            self.vision_mode.set("AI Vision (Phase 2)")
+        else:
+            self.vision_mode.set("Classic CV")
         
         # Vision controls
         controls_frame = ctk.CTkFrame(vision_tab)
@@ -274,8 +300,8 @@ class OSRSBotGUI:
         
         ctk.CTkButton(
             controls_frame,
-            text="📷 Capture Screen",
-            command=self.capture_screen
+            text="📷 Capture & Analyze",
+            command=self.capture_and_analyze
         ).pack(side="left", padx=5, pady=10)
         
         ctk.CTkButton(
@@ -286,24 +312,92 @@ class OSRSBotGUI:
         
         ctk.CTkButton(
             controls_frame,
-            text="🎯 Live View",
-            command=self.toggle_live_view
+            text="🎯 Live Analysis",
+            command=self.toggle_live_analysis
         ).pack(side="left", padx=5, pady=10)
         
-        # Vision display
-        display_frame = ctk.CTkFrame(vision_tab)
-        display_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        ctk.CTkButton(
+            controls_frame,
+            text="🧠 Game State",
+            command=self.show_game_state
+        ).pack(side="left", padx=5, pady=10)
+        
+        # Main content area with paned window
+        content_paned = ctk.CTkFrame(vision_tab)
+        content_paned.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Left side - Vision display
+        display_frame = ctk.CTkFrame(content_paned)
+        display_frame.pack(side="left", fill="both", expand=True, padx=(0, 5))
+        
+        ctk.CTkLabel(display_frame, text="Vision Analysis", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=5)
         
         # Canvas for image display
         self.vision_canvas = tk.Canvas(display_frame, bg="black")
         self.vision_canvas.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # Detection results
-        results_frame = ctk.CTkFrame(vision_tab)
-        results_frame.pack(fill="x", padx=10, pady=10)
+        # Right side - Analysis results
+        results_frame = ctk.CTkFrame(content_paned)
+        results_frame.pack(side="right", fill="y", padx=(5, 0), sticky="ns")
+        results_frame.configure(width=400)
         
-        self.detection_results = ctk.CTkTextbox(results_frame, height=100)
-        self.detection_results.pack(fill="x", padx=10, pady=10)
+        ctk.CTkLabel(results_frame, text="Analysis Results", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=5)
+        
+        # Game state display
+        self.game_state_display = ctk.CTkTextbox(results_frame, height=200, width=380)
+        self.game_state_display.pack(padx=10, pady=5)
+        
+        # Detection statistics
+        stats_label = ctk.CTkLabel(results_frame, text="Detection Statistics", font=ctk.CTkFont(size=14, weight="bold"))
+        stats_label.pack(pady=(10, 5))
+        
+        self.detection_stats = ctk.CTkTextbox(results_frame, height=150, width=380)
+        self.detection_stats.pack(padx=10, pady=5)
+        
+        # AI Vision settings (if available)
+        if AI_VISION_AVAILABLE:
+            settings_label = ctk.CTkLabel(results_frame, text="AI Vision Settings", font=ctk.CTkFont(size=14, weight="bold"))
+            settings_label.pack(pady=(10, 5))
+            
+            settings_frame = ctk.CTkFrame(results_frame)
+            settings_frame.pack(fill="x", padx=10, pady=5)
+            
+            # Confidence threshold
+            ctk.CTkLabel(settings_frame, text="Confidence:").pack(anchor="w", padx=5)
+            self.confidence_slider = ctk.CTkSlider(settings_frame, from_=0.1, to=1.0, number_of_steps=18)
+            self.confidence_slider.set(0.5)
+            self.confidence_slider.pack(fill="x", padx=5, pady=2)
+            
+            # Detection types
+            ctk.CTkLabel(settings_frame, text="Detection Types:").pack(anchor="w", padx=5, pady=(10, 5))
+            
+            self.detect_npcs = ctk.CTkCheckBox(settings_frame, text="NPCs")
+            self.detect_npcs.pack(anchor="w", padx=10)
+            self.detect_npcs.select()
+            
+            self.detect_items = ctk.CTkCheckBox(settings_frame, text="Items")
+            self.detect_items.pack(anchor="w", padx=10)
+            self.detect_items.select()
+            
+            self.detect_players = ctk.CTkCheckBox(settings_frame, text="Players")
+            self.detect_players.pack(anchor="w", padx=10)
+            self.detect_players.select()
+            
+            self.detect_ui = ctk.CTkCheckBox(settings_frame, text="UI Elements")
+            self.detect_ui.pack(anchor="w", padx=10)
+            self.detect_ui.select()
+            
+            # OCR settings
+            self.enable_ocr = ctk.CTkCheckBox(settings_frame, text="Enable OCR")
+            self.enable_ocr.pack(anchor="w", padx=10, pady=(10, 5))
+            self.enable_ocr.select()
+        
+        # Performance info
+        perf_frame = ctk.CTkFrame(vision_tab)
+        perf_frame.pack(fill="x", padx=10, pady=10)
+        
+        self.vision_performance = ctk.CTkLabel(perf_frame, text="Performance: Ready")
+        self.vision_performance.pack(pady=5)
     
     def create_performance_tab(self):
         """Create the performance monitoring tab"""
@@ -640,6 +734,295 @@ class OSRSBotGUI:
                 bot.stop()
             except:
                 pass
+    
+    # AI Vision Methods (Phase 2)
+    def on_vision_mode_change(self, value):
+        """Handle vision mode change"""
+        self.update_status(f"Vision mode changed to: {value}")
+        if value == "AI Vision (Phase 2)" and not AI_VISION_AVAILABLE:
+            messagebox.showwarning("AI Vision Unavailable", 
+                                 "AI Vision system is not available. Please install required dependencies.")
+            self.vision_mode.set("Classic CV")
+    
+    def capture_and_analyze(self):
+        """Capture screen and run AI analysis"""
+        try:
+            # Capture screenshot
+            image = screen_capture.capture_client()
+            if image is None:
+                self.update_status("❌ Failed to capture screen")
+                return
+            
+            self.update_status("📷 Analyzing screenshot...")
+            
+            # Run analysis based on mode
+            mode = self.vision_mode.get()
+            if mode == "AI Vision (Phase 2)" and AI_VISION_AVAILABLE:
+                # Use AI Vision system
+                game_state = intelligent_vision.analyze_game_state(image)
+                self._display_ai_results(image, game_state)
+            else:
+                # Use classic computer vision
+                results = cv_system.process_image(image)
+                self._display_classic_results(image, results)
+            
+        except Exception as e:
+            self.update_status(f"❌ Analysis failed: {e}")
+            logger.error(f"Analysis error: {e}")
+    
+    def toggle_live_analysis(self):
+        """Toggle live analysis mode"""
+        # This would implement real-time analysis
+        self.update_status("🎯 Live analysis not yet implemented")
+    
+    def show_game_state(self):
+        """Show detailed game state analysis"""
+        if not AI_VISION_AVAILABLE:
+            messagebox.showinfo("AI Vision Required", "This feature requires the AI Vision system.")
+            return
+        
+        try:
+            image = screen_capture.capture_client()
+            if image is None:
+                self.update_status("❌ Failed to capture screen")
+                return
+            
+            # Analyze current game state
+            game_state = intelligent_vision.analyze_game_state(image)
+            
+            # Create detailed game state window
+            self._show_game_state_window(game_state)
+            
+        except Exception as e:
+            self.update_status(f"❌ Game state analysis failed: {e}")
+            logger.error(f"Game state error: {e}")
+    
+    def _display_ai_results(self, image, game_state: 'GameState'):
+        """Display AI vision analysis results"""
+        try:
+            # Display image with annotations
+            annotated_image = intelligent_vision.visualize_analysis(image, game_state)
+            self._display_image_on_canvas(annotated_image, self.vision_canvas)
+            
+            # Update game state display
+            state_text = f"""🧠 AI Vision Analysis Results
+📅 Timestamp: {time.strftime('%H:%M:%S')}
+🎯 Scene: {game_state.scene_type.value} ({game_state.confidence:.2f})
+⚡ Processing Time: {game_state.processing_time:.3f}s
+
+👤 Player Status:
+  Health: {game_state.player_status.health_percent:.1f}%
+  Prayer: {game_state.player_status.prayer_percent:.1f}%
+  Energy: {game_state.player_status.energy_percent:.1f}%
+  In Combat: {game_state.player_status.is_in_combat}
+
+🗺️ Minimap:
+  NPCs Visible: {len(game_state.minimap.visible_npcs or [])}
+  Players Visible: {len(game_state.minimap.visible_players or [])}
+  Region: {game_state.minimap.region_type}
+
+🎒 Inventory:
+  Free Slots: {game_state.inventory.free_slots}/28
+  Items: {len(game_state.inventory.items or [])}
+  Valuable Items: {len(game_state.inventory.valuable_items or [])}
+
+💬 Interface:
+  Open Interfaces: {len(game_state.interface_state.open_interfaces or [])}
+  Chat Messages: {len(game_state.interface_state.active_chat or [])}
+  Clickable Elements: {len(game_state.interface_state.clickable_elements or [])}
+"""
+            self.game_state_display.delete("0.0", "end")
+            self.game_state_display.insert("0.0", state_text)
+            
+            # Update detection statistics
+            stats_text = f"""📊 Detection Statistics
+🎯 Objects Detected:
+  NPCs: {len(game_state.npcs or [])}
+  Items: {len(game_state.items or [])}
+  Players: {len(game_state.players or [])}
+  UI Elements: {len(game_state.ui_elements or [])}
+  Environment: {len(game_state.environment or [])}
+
+🏆 Top Priority Objects:
+"""
+            top_objects = game_state.get_highest_priority_objects(3)
+            for i, obj in enumerate(top_objects, 1):
+                stats_text += f"  {i}. {obj.label} ({obj.action_priority:.2f})\n"
+            
+            # Performance stats
+            if hasattr(intelligent_vision, 'get_performance_stats'):
+                perf_stats = intelligent_vision.get_performance_stats()
+                stats_text += f"""
+⚡ Performance:
+  Frames Processed: {perf_stats.get('frames_processed', 0)}
+  Avg Processing Time: {perf_stats.get('avg_processing_time', 0):.3f}s
+  Last Analysis: {perf_stats.get('last_analysis_time', 0):.3f}s
+"""
+            
+            self.detection_stats.delete("0.0", "end")
+            self.detection_stats.insert("0.0", stats_text)
+            
+            # Update performance label
+            self.vision_performance.configure(
+                text=f"Performance: {game_state.processing_time:.3f}s | Objects: {len(game_state.npcs + game_state.items + game_state.players)}"
+            )
+            
+            self.update_status(f"✅ AI analysis complete - {game_state.scene_type.value} scene detected")
+            
+        except Exception as e:
+            logger.error(f"Error displaying AI results: {e}")
+            self.update_status(f"❌ Display error: {e}")
+    
+    def _display_classic_results(self, image, results):
+        """Display classic computer vision results"""
+        try:
+            # Display original image
+            self._display_image_on_canvas(image, self.vision_canvas)
+            
+            # Update displays with classic results
+            results_text = f"""🔍 Classic Computer Vision Results
+📅 Timestamp: {time.strftime('%H:%M:%S')}
+🖼️ Image Shape: {results.get('image_shape', 'Unknown')}
+
+📊 Detections:
+  Health Bars: {len(results.get('health_bars', []))}
+  Features: {results.get('features', {}).get('keypoint_count', 0)} keypoints
+"""
+            
+            self.game_state_display.delete("0.0", "end")
+            self.game_state_display.insert("0.0", results_text)
+            
+            self.detection_stats.delete("0.0", "end")
+            self.detection_stats.insert("0.0", "Classic CV mode - basic feature detection")
+            
+            self.update_status("✅ Classic CV analysis complete")
+            
+        except Exception as e:
+            logger.error(f"Error displaying classic results: {e}")
+            self.update_status(f"❌ Display error: {e}")
+    
+    def _display_image_on_canvas(self, cv_image, canvas):
+        """Display OpenCV image on tkinter canvas"""
+        try:
+            # Convert BGR to RGB
+            rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+            
+            # Convert to PIL Image
+            pil_image = Image.fromarray(rgb_image)
+            
+            # Resize to fit canvas
+            canvas_width = canvas.winfo_width()
+            canvas_height = canvas.winfo_height()
+            
+            if canvas_width > 1 and canvas_height > 1:
+                pil_image.thumbnail((canvas_width, canvas_height), Image.Resampling.LANCZOS)
+            
+            # Convert to PhotoImage
+            photo = ImageTk.PhotoImage(pil_image)
+            
+            # Clear canvas and display image
+            canvas.delete("all")
+            canvas.create_image(canvas_width//2, canvas_height//2, image=photo, anchor="center")
+            
+            # Keep a reference to prevent garbage collection
+            canvas.image = photo
+            
+        except Exception as e:
+            logger.error(f"Error displaying image: {e}")
+    
+    def _show_game_state_window(self, game_state: 'GameState'):
+        """Show detailed game state in a separate window"""
+        try:
+            # Create new window
+            state_window = ctk.CTkToplevel(self.root)
+            state_window.title("Detailed Game State Analysis")
+            state_window.geometry("800x600")
+            
+            # Create scrollable text area
+            text_area = ctk.CTkTextbox(state_window)
+            text_area.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            # Format detailed game state
+            detailed_text = f"""🧠 COMPREHENSIVE GAME STATE ANALYSIS
+═══════════════════════════════════════════════════════════════
+
+📅 Analysis Metadata:
+  Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(game_state.timestamp))}
+  Processing Time: {game_state.processing_time:.4f} seconds
+  Analysis Version: {game_state.analysis_version}
+  Frame Quality: {game_state.frame_quality:.2f}
+
+🎯 Scene Classification:
+  Scene Type: {game_state.scene_type.value.upper()}
+  Confidence: {game_state.confidence:.4f}
+
+👤 Player Status:
+  Health: {game_state.player_status.health_percent:.2f}%
+  Prayer: {game_state.player_status.prayer_percent:.2f}%
+  Energy: {game_state.player_status.energy_percent:.2f}%
+  Combat Level: {game_state.player_status.combat_level or 'Unknown'}
+  In Combat: {game_state.player_status.is_in_combat}
+  Moving: {game_state.player_status.is_moving}
+  Animation: {game_state.player_status.animation_state}
+
+🗺️ Minimap Analysis:
+  Player Position: {game_state.minimap.player_position}
+  North Direction: {game_state.minimap.north_direction:.1f}°
+  Region Type: {game_state.minimap.region_type}
+  NPCs Visible: {len(game_state.minimap.visible_npcs)}
+  Players Visible: {len(game_state.minimap.visible_players)}
+  Points of Interest: {len(game_state.minimap.points_of_interest)}
+
+🎒 Inventory Analysis:
+  Total Items: {len(game_state.inventory.items)}
+  Free Slots: {game_state.inventory.free_slots}/28
+  Valuable Items: {len(game_state.inventory.valuable_items)}
+  Consumables: {len(game_state.inventory.consumables)}
+  Equipment: {len(game_state.inventory.equipment)}
+
+💬 Interface State:
+  Open Interfaces: {len(game_state.interface_state.open_interfaces)}
+  Clickable Elements: {len(game_state.interface_state.clickable_elements)}
+  Dialog Messages: {len(game_state.interface_state.dialog_text)}
+  Chat Messages: {len(game_state.interface_state.active_chat)}
+
+🎯 Detected Objects Summary:
+  NPCs: {len(game_state.npcs)}
+  Items: {len(game_state.items)}
+  Players: {len(game_state.players)}
+  UI Elements: {len(game_state.ui_elements)}
+  Environment: {len(game_state.environment)}
+
+🏆 High Priority Objects:
+"""
+            
+            # Add high priority objects
+            priority_objects = game_state.get_highest_priority_objects(10)
+            for i, obj in enumerate(priority_objects, 1):
+                detailed_text += f"  {i:2d}. {obj.label:<15} | Type: {obj.object_type:<12} | Priority: {obj.action_priority:.3f} | Confidence: {obj.confidence:.3f}\n"
+            
+            # Add detailed object listings
+            if game_state.npcs:
+                detailed_text += f"\n🔥 NPCs Detected ({len(game_state.npcs)}):\n"
+                for i, npc in enumerate(game_state.npcs[:10], 1):  # Show top 10
+                    detailed_text += f"  {i:2d}. {npc.label} at ({npc.x}, {npc.y}) - Priority: {npc.action_priority:.3f}\n"
+            
+            if game_state.items:
+                detailed_text += f"\n💎 Items Detected ({len(game_state.items)}):\n"
+                for i, item in enumerate(game_state.items[:10], 1):  # Show top 10
+                    detailed_text += f"  {i:2d}. {item.label} at ({item.x}, {item.y}) - Priority: {item.action_priority:.3f}\n"
+            
+            if game_state.interface_state.active_chat:
+                detailed_text += f"\n💬 Recent Chat Messages:\n"
+                for i, msg in enumerate(game_state.interface_state.active_chat[-5:], 1):  # Last 5 messages
+                    detailed_text += f"  {i}. {msg}\n"
+            
+            # Insert text
+            text_area.insert("0.0", detailed_text)
+            
+        except Exception as e:
+            logger.error(f"Error showing game state window: {e}")
+            messagebox.showerror("Error", f"Failed to show game state: {e}")
     
     # Placeholder methods for remaining functionality
     def open_settings(self): pass
