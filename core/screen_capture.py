@@ -15,6 +15,12 @@ from config.settings import SCREEN_CAPTURE, CLIENT_DETECTION, DEVELOPMENT
 
 logger = logging.getLogger(__name__)
 
+# Import adaptive vision
+try:
+    from core.adaptive_vision import adaptive_vision
+except ImportError:
+    adaptive_vision = None
+
 
 @dataclass
 class ClientRegion:
@@ -78,12 +84,32 @@ class ScreenCapture:
                 height=window.height
             )
             
-            # Validate window size
-            expected_size = CLIENT_DETECTION["client_size"]
-            if (abs(region.width - expected_size[0]) > 50 or 
-                abs(region.height - expected_size[1]) > 50):
-                logger.warning(f"Client size mismatch. Expected: {expected_size}, "
-                             f"Found: {region.width}x{region.height}")
+            # Validate window size (if auto-detect is disabled)
+            if not CLIENT_DETECTION.get("auto_detect_size", True):
+                expected_size = CLIENT_DETECTION["client_size"]
+                tolerance = CLIENT_DETECTION.get("size_tolerance", 50)
+                if (abs(region.width - expected_size[0]) > tolerance or 
+                    abs(region.height - expected_size[1]) > tolerance):
+                    logger.warning(f"Client size mismatch. Expected: {expected_size}, "
+                                 f"Found: {region.width}x{region.height}")
+            else:
+                # Auto-detect and adapt to current client size
+                logger.info(f"Auto-detected client size: {region.width}x{region.height}")
+                
+                # Configure adaptive vision
+                if adaptive_vision:
+                    adaptive_vision.set_client_size(region.width, region.height)
+                    impact = adaptive_vision.get_performance_impact()
+                    logger.info(f"Performance impact: {impact}")
+                    
+                    if adaptive_vision.is_large_client():
+                        logger.warning("Large client detected - consider smaller window for better performance")
+                        recommendations = adaptive_vision.get_recommendations()
+                        for rec in recommendations:
+                            logger.info(f"💡 Recommendation: {rec}")
+                else:
+                    if region.width > 1000 or region.height > 600:
+                        logger.info("Large client detected - this may impact performance but will work")
             
             logger.info(f"Found OSRS client at {region.x}, {region.y} "
                        f"({region.width}x{region.height})")

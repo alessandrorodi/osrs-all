@@ -1,0 +1,21 @@
+# Example Bot Configuration
+name: "example_bot"
+enabled: true
+
+# Bot-specific settings
+settings:
+  target_monster: "goblin"
+  combat_style: "melee"
+  food_threshold: 50
+  
+# Detection templates
+templates:
+  - "goblin"
+  - "health_bar"
+  - "food_item"
+
+# Regions of interest (relative to client)
+regions:
+  inventory: [548, 205, 190, 261]
+  minimap: [570, 9, 146, 151]
+  chat: [7, 345, 506, 120]

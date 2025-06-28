@@ -28,7 +28,7 @@ SCREEN_CAPTURE = {
 VISION = {
     "template_matching": {
         "threshold": 0.8,  # Confidence threshold for template matching
-        "method": "cv2.TM_CCOEFF_NORMED",  # OpenCV template matching method
+        "method": "TM_CCOEFF_NORMED",  # OpenCV template matching method
         "max_matches": 10,  # Maximum number of matches to find
     },
     "feature_detection": {
@@ -92,12 +92,15 @@ LOGGING = {
 
 # Client detection settings
 CLIENT_DETECTION = {
-    "window_title": "Old School RuneScape",
+    "window_title": "Runelite - Solo Tale",
     "process_name": "osrs",
     "auto_focus": True,
     "require_focus": True,  # Require client to be in focus
-    "client_size": (765, 503),  # Standard OSRS client size
-    "fixed_mode": True,  # Assume fixed mode client
+    "client_size": (765, 503),  # Standard OSRS client size (flexible)
+    "size_tolerance": 500,  # Allow larger size variation for Runelite
+    "auto_detect_size": True,  # Automatically adapt to client size
+    "fixed_mode": False,  # Support both fixed and resizable mode
+    "scale_factor": 1.0,  # Will be calculated based on actual size
 }
 
 # Development settings

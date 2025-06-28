@@ -31,6 +31,18 @@ python setup.py
 
 ## Quick Start
 
+### Option 1: GUI Interface (Recommended)
+```bash
+python launch_gui.py
+```
+Use the modern graphical interface to:
+- Monitor system status in real-time
+- Manage bots visually
+- Test computer vision
+- View performance charts
+- Browse logs and templates
+
+### Option 2: Command Line
 1. **Calibrate your client**: Run the calibration tool to detect your OSRS client
 2. **Create templates**: Use the template creator to capture UI elements
 3. **Configure your bot**: Edit configuration files for your specific needs
@@ -43,10 +55,12 @@ osrs-bot-framework/
 ├── core/              # Core framework components
 ├── vision/            # Computer vision modules
 ├── bots/              # Bot implementations
+├── gui/               # Modern GUI interface
 ├── config/            # Configuration files
 ├── utils/             # Utility functions
 ├── tools/             # Development and debugging tools
-└── data/              # Templates, models, and data files
+├── data/              # Templates, models, and data files
+└── launch_gui.py      # GUI launcher script
 ```
 
 ## Safety and Ethics
