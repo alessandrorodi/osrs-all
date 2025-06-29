@@ -442,8 +442,15 @@ class OSRSTextIntelligenceCore:
                     skill_xp[event.skill] = 0
                 skill_xp[event.skill] += event.xp_gained
         
-        # Calculate rates (XP per hour)
-        time_factor = 3600 / (current_time - max(hour_ago, self.session_start))
+        # Calculate rates (XP per hour) with division by zero protection
+        time_elapsed = current_time - max(hour_ago, self.session_start)
+        
+        # Ensure we have at least 1 minute of data to calculate meaningful rates
+        if time_elapsed < 60:  # Less than 1 minute
+            # Return zero rates if no meaningful time has passed
+            return {skill: 0.0 for skill in skill_xp.keys()}
+        
+        time_factor = 3600 / time_elapsed
         
         rates = {}
         for skill, xp in skill_xp.items():

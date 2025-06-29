@@ -95,7 +95,7 @@ LOGGING = {
 
 # Client detection settings
 CLIENT_DETECTION = {
-    "window_title": "Runelite - Solo Tale",
+    "window_title": "RuneLite - Solo Tale",  # Fixed capitalization
     "process_name": "osrs",
     "auto_focus": True,
     "require_focus": True,  # Require client to be in focus

@@ -332,6 +332,57 @@ class OSRSTextIntelligence:
             'Coal': {'ge_price': 150, 'high_alch': 0, 'category': 'resource'}
         }
     
+    def _calculate_scaling_factors(self, screenshot: np.ndarray) -> Tuple[float, float]:
+        """Calculate scaling factors for text regions based on screenshot size"""
+        # Standard OSRS fixed mode dimensions
+        STANDARD_WIDTH = 765
+        STANDARD_HEIGHT = 503
+        
+        height, width = screenshot.shape[:2]
+        
+        scale_x = width / STANDARD_WIDTH
+        scale_y = height / STANDARD_HEIGHT
+        
+        logger.debug(f"Client scaling: {width}x{height} -> scale_x={scale_x:.2f}, scale_y={scale_y:.2f}")
+        
+        return scale_x, scale_y
+    
+    def _scale_text_regions(self, screenshot: np.ndarray) -> Dict[str, OSRSTextRegion]:
+        """Scale text regions based on actual client size"""
+        scale_x, scale_y = self._calculate_scaling_factors(screenshot)
+        
+        # If scaling is close to 1.0, no need to scale
+        if 0.9 <= scale_x <= 1.1 and 0.9 <= scale_y <= 1.1:
+            return self.text_regions
+        
+        scaled_regions = {}
+        
+        for name, region in self.text_regions.items():
+            x, y, w, h = region.region
+            
+            # Scale coordinates and dimensions
+            scaled_x = int(x * scale_x)
+            scaled_y = int(y * scale_y) 
+            scaled_w = int(w * scale_x)
+            scaled_h = int(h * scale_y)
+            
+            # Create scaled region
+            scaled_region = OSRSTextRegion(
+                name=region.name,
+                region=(scaled_x, scaled_y, scaled_w, scaled_h),
+                text_type=region.text_type,
+                preprocessing=region.preprocessing,
+                confidence_threshold=region.confidence_threshold,
+                scan_frequency=region.scan_frequency,
+                priority=region.priority
+            )
+            
+            scaled_regions[name] = scaled_region
+            
+            logger.debug(f"Scaled {name}: ({x},{y},{w},{h}) -> ({scaled_x},{scaled_y},{scaled_w},{scaled_h})")
+        
+        return scaled_regions
+
     def analyze_game_text(self, screenshot: np.ndarray, 
                          regions: Optional[List[str]] = None,
                          force_refresh: bool = False) -> Dict[str, Any]:
@@ -349,8 +400,11 @@ class OSRSTextIntelligence:
         start_time = time.time()
         
         try:
+            # Scale text regions for current client size
+            scaled_regions = self._scale_text_regions(screenshot)
+            
             # Determine regions to process
-            target_regions = regions or list(self.text_regions.keys())
+            target_regions = regions or list(scaled_regions.keys())
             
             # Initialize results
             results = {
@@ -365,15 +419,15 @@ class OSRSTextIntelligence:
             }
             
             # Process regions in parallel by priority
-            priority_groups = self._group_regions_by_priority(target_regions)
+            priority_groups = self._group_regions_by_priority(target_regions, scaled_regions)
             
             for priority, region_names in priority_groups.items():
                 if priority == 1:  # High priority - process immediately
-                    self._process_regions_batch(screenshot, region_names, results, force_refresh)
+                    self._process_regions_batch(screenshot, region_names, results, force_refresh, scaled_regions)
                 else:  # Lower priority - can be processed in background
                     future = self.executor.submit(
                         self._process_regions_batch, 
-                        screenshot, region_names, results, force_refresh
+                        screenshot, region_names, results, force_refresh, scaled_regions
                     )
             
             # Post-process and enhance results
@@ -406,12 +460,13 @@ class OSRSTextIntelligence:
                 'performance': {'processing_time': time.time() - start_time}
             }
     
-    def _group_regions_by_priority(self, region_names: List[str]) -> Dict[int, List[str]]:
+    def _group_regions_by_priority(self, region_names: List[str], 
+                                  regions: Dict[str, OSRSTextRegion]) -> Dict[int, List[str]]:
         """Group regions by processing priority"""
         groups = {}
         for name in region_names:
-            if name in self.text_regions:
-                priority = self.text_regions[name].priority
+            if name in regions:
+                priority = regions[name].priority
                 if priority not in groups:
                     groups[priority] = []
                 groups[priority].append(name)
@@ -420,14 +475,17 @@ class OSRSTextIntelligence:
     def _process_regions_batch(self, screenshot: np.ndarray, 
                               region_names: List[str],
                               results: Dict[str, Any],
-                              force_refresh: bool = False) -> None:
+                              force_refresh: bool = False,
+                              regions: Optional[Dict[str, OSRSTextRegion]] = None) -> None:
         """Process a batch of regions"""
+        regions = regions or self.text_regions
+        
         with self.processing_lock:
             for region_name in region_names:
-                if region_name not in self.text_regions:
+                if region_name not in regions:
                     continue
                 
-                region_config = self.text_regions[region_name]
+                region_config = regions[region_name]
                 
                 # Check cache first
                 cache_key = f"{region_name}_{hash(screenshot.tobytes())}"

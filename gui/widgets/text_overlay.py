@@ -41,18 +41,81 @@ class TextIntelligencePanel(ctk.CTkFrame):
         
         self.parent = parent
         self.is_active = False
-        self.update_interval = 1000  # milliseconds
+        self.update_interval = 500  # Back to 500ms for real-time performance 
         self.last_update = 0
         
         # Text intelligence data
         self.current_data = {}
         self.intelligence_results = {}
         
+        # Prevent rapid toggling
+        self._last_toggle_time = 0
+        self._toggle_cooldown = 1.0  # 1 second cooldown
+        
+        # Session tracking
+        self._session_start = time.time()
+        
         # Setup UI
         self.setup_ui()
         self.setup_callbacks()
         
         logger.info("Text Intelligence Panel initialized")
+        
+    def _convert_adaptive_results(self, adaptive_data: dict) -> dict:
+        """Convert adaptive detection results to legacy format for GUI compatibility"""
+        try:
+            # Convert adaptive format to expected format
+            converted = {
+                'chat_messages': [],
+                'items': [],
+                'xp_analysis': {'events': []},
+                'recommendations': [],
+                'alerts': []
+            }
+            
+            # Convert chat messages
+            for chat_msg in adaptive_data.get('chat_messages', []):
+                converted['chat_messages'].append({
+                    'text': chat_msg['text'],
+                    'confidence': chat_msg['confidence'],
+                    'timestamp': time.time()
+                })
+            
+            # Convert items
+            for item in adaptive_data.get('items', []):
+                converted['items'].append({
+                    'name': item['name'],
+                    'confidence': item['confidence'],
+                    'position': item['position']
+                })
+            
+            # Add performance info
+            perf = adaptive_data.get('performance', {})
+            converted['performance'] = {
+                'processing_time': perf.get('processing_time', 0),
+                'total_detections': perf.get('total_detections', 0)
+            }
+            
+            # Add summary based on findings
+            summary = {
+                'chat_count': len(converted['chat_messages']),
+                'item_count': len(converted['items']),
+                'overlay_count': len(adaptive_data.get('overlays', [])),
+                'number_count': len(adaptive_data.get('numbers', []))
+            }
+            converted['summary'] = summary
+            
+            return converted
+            
+        except Exception as e:
+            logger.error(f"Failed to convert adaptive results: {e}")
+            return {
+                'chat_messages': [],
+                'items': [],
+                'xp_analysis': {'events': []},
+                'recommendations': [],
+                'alerts': []
+            }
     
     def setup_ui(self):
         """Setup the text intelligence panel UI"""
@@ -331,6 +394,14 @@ class TextIntelligencePanel(ctk.CTkFrame):
     
     def toggle_intelligence(self):
         """Toggle text intelligence processing"""
+        current_time = time.time()
+        
+        # Prevent rapid toggling
+        if current_time - self._last_toggle_time < self._toggle_cooldown:
+            logger.debug("Toggle ignored - too soon after last toggle")
+            return
+        
+        self._last_toggle_time = current_time
         self.is_active = not self.is_active
         
         if self.is_active:
@@ -392,49 +463,63 @@ class TextIntelligencePanel(ctk.CTkFrame):
             return
         
         try:
-            # Get latest intelligence data
-            if hasattr(self.parent, 'get_latest_screenshot'):
-                screenshot = self.parent.get_latest_screenshot()
-                if screenshot is not None:
-                    # Analyze text
-                    self.current_data = osrs_text_intelligence.analyze_game_text(screenshot)
-                    self.intelligence_results = text_intelligence.analyze_text_intelligence(self.current_data)
-                    
-                    # Update displays
-                    self.update_overview_display()
-                    self.update_chat_display()
-                    self.update_xp_display()
-                    self.update_items_display()
-                    self.update_alerts_display()
+            # Get live screenshot directly from screen capture
+            from core.screen_capture import screen_capture
+            screenshot = screen_capture.capture_client()
+            
+            if screenshot is not None:
+                logger.debug(f"Got live screenshot: {screenshot.shape}")
+                
+                # Use intelligent AI vision system (game-bot efficiency + AI intelligence)
+                from vision.intelligent_vision import intelligent_vision
+                self.current_data = intelligent_vision.analyze_screenshot_intelligent(screenshot)
+                
+                # Convert to old format for compatibility
+                self.intelligence_results = self._convert_adaptive_results(self.current_data)
+                
+                logger.debug(f"Text detection results: {len(self.current_data.get('chat_messages', []))} chat, {len(self.current_data.get('items', []))} items")
+                
+                # Update displays
+                self.update_overview_display()
+                self.update_chat_display()
+                self.update_xp_display()
+                self.update_items_display()
+                self.update_alerts_display()
+            else:
+                logger.debug("No screenshot available - make sure OSRS client is open and calibrated")
         
         except Exception as e:
             logger.error(f"Failed to update text intelligence display: {e}")
+            # Don't automatically deactivate on error, just skip this update
+            logger.debug("Continuing text intelligence processing despite error")
         
         # Schedule next update
         self.after(self.update_interval, self.update_display)
     
     def update_overview_display(self):
         """Update the overview tab"""
-        if not self.intelligence_results:
+        if not self.current_data:
             return
         
-        # Update session stats
-        session_data = text_intelligence.get_session_summary()
-        
-        # Format duration
-        duration = session_data.get('session_duration', 0)
+        # Calculate session stats from current data
+        session_duration = getattr(self, '_session_start', time.time())
+        duration = time.time() - session_duration
         hours = int(duration // 3600)
         minutes = int((duration % 3600) // 60)
         duration_str = f"{hours:02d}:{minutes:02d}"
         
+        # Get performance info
+        perf = self.current_data.get('performance', {})
+        processing_time = perf.get('processing_time', 0)
+        
         # Update stat labels
         stats_updates = {
             "Session Duration": duration_str,
-            "Total XP Gained": f"{session_data.get('total_session_xp', 0):,}",
+            "Total XP Gained": "-- (tracking not implemented)",
             "Messages Processed": f"{len(self.current_data.get('chat_messages', []))}",
             "Items Detected": f"{len(self.current_data.get('items', []))}",
             "Alerts Generated": f"{len(self.intelligence_results.get('alerts', []))}",
-            "Processing Rate": f"{1000/self.intelligence_results.get('processing_time', 1):.1f} Hz"
+            "Processing Rate": f"{1/processing_time:.1f} Hz" if processing_time > 0 else "-- Hz"
         }
         
         for stat_name, value in stats_updates.items():
@@ -442,17 +527,21 @@ class TextIntelligencePanel(ctk.CTkFrame):
                 self.stat_labels[stat_name].configure(text=f"{stat_name}: {value}")
         
         # Update performance display
-        perf_stats = osrs_text_intelligence.get_performance_stats()
-        perf_text = f"""Processing Performance:
-Average Latency: {perf_stats.get('avg_latency', 0):.3f}s
-Cache Efficiency: {perf_stats.get('cache_efficiency', 0):.1%}
-Total OCR Calls: {perf_stats.get('total_ocr_calls', 0):,}
-GPU Enabled: {perf_stats.get('gpu_enabled', False)}
+        ui_state = self.current_data.get('ui_state', 'unknown')
+        perf_text = f"""🧠 Intelligent AI Vision Performance:
+Processing Time: {processing_time:.3f}s
+UI State Detected: {ui_state.title()}
+Average Time: {perf.get('avg_processing_time', processing_time):.3f}s
+Screenshot Size: {perf.get('screenshot_size', 'unknown')}
 
-Intelligence Analysis:
-XP Events: {len(self.intelligence_results.get('xp_analysis', {}).get('events', []))}
-Combat Events: {len(self.intelligence_results.get('combat_analysis', {}).get('events', []))}
-Trade Events: {len(self.intelligence_results.get('market_analysis', {}).get('trade_events', []))}
+🎯 Smart Detection Results (Context-Aware):
+Chat Messages: {len(self.current_data.get('chat_messages', []))}
+Items Detected: {len(self.current_data.get('items', []))}
+Player Stats: {len(self.current_data.get('player_stats', {}))}
+AI Alerts: {len(self.current_data.get('alerts', []))}
+
+🚀 Performance Rating: {"🟢 EXCELLENT" if processing_time < 0.1 else "🟡 GOOD" if processing_time < 0.5 else "🔴 SLOW"}
+🧠 Context Awareness: {"✅ Active" if ui_state != 'unknown' else "⚠️ Learning"}
 """
         
         self.performance_display.delete(1.0, tk.END)
@@ -460,20 +549,26 @@ Trade Events: {len(self.intelligence_results.get('market_analysis', {}).get('tra
     
     def update_chat_display(self):
         """Update the chat tab"""
-        if not self.current_data.get('chat_messages'):
+        chat_messages = self.current_data.get('chat_messages', [])
+        if not chat_messages:
             return
         
-        # Filter messages based on selected filters
-        filtered_messages = self.filter_chat_messages(self.current_data['chat_messages'])
-        
-        # Display recent messages
+        # Display recent messages (adaptive format)
         chat_text = ""
-        for msg in filtered_messages[-20:]:  # Show last 20 messages
-            timestamp = datetime.fromtimestamp(msg.timestamp).strftime("%H:%M:%S")
-            if msg.is_system:
-                chat_text += f"[{timestamp}] {msg.message}\n"
+        for msg in chat_messages[-20:]:  # Show last 20 messages
+            current_time = datetime.now().strftime("%H:%M:%S")
+            if isinstance(msg, dict):
+                # Adaptive format
+                text = msg.get('text', '')
+                confidence = msg.get('confidence', 0)
+                chat_text += f"[{current_time}] {text} (conf: {confidence:.2f})\n"
             else:
-                chat_text += f"[{timestamp}] {msg.player_name}: {msg.message}\n"
+                # Legacy format
+                timestamp = datetime.fromtimestamp(msg.timestamp).strftime("%H:%M:%S")
+                if msg.is_system:
+                    chat_text += f"[{timestamp}] {msg.message}\n"
+                else:
+                    chat_text += f"[{timestamp}] {msg.player_name}: {msg.message}\n"
         
         self.chat_display.delete(1.0, tk.END)
         self.chat_display.insert(1.0, chat_text)
@@ -519,40 +614,74 @@ Most Trained: {session_data.get('most_trained_skill', 'None')}
     
     def update_items_display(self):
         """Update the items tab"""
-        if not self.current_data.get('items'):
-            return
+        items = self.current_data.get('items', [])
         
-        items = self.current_data['items']
-        total_value = sum(item.ge_price * item.quantity for item in items if item.ge_price)
-        valuable_items = [item for item in items if item.is_valuable]
-        
-        # Update value summary
-        value_updates = {
-            "Total Value": f"{total_value:,} gp",
-            "Valuable Items": f"{len(valuable_items)}",
-            "Average Item Value": f"{total_value // len(items) if items else 0:,} gp",
-            "Most Valuable": max(items, key=lambda x: x.ge_price or 0).name if items else "None"
-        }
-        
-        for stat_name, value in value_updates.items():
-            if stat_name in self.value_labels:
-                self.value_labels[stat_name].configure(text=f"{stat_name}: {value}")
-        
-        # Update items table
+        # Always clear the tree first
         for item in self.items_tree.get_children():
             self.items_tree.delete(item)
         
-        for item in items:
-            unit_price = item.ge_price or 0
-            total_item_value = unit_price * item.quantity
-            
+        if not items:
+            # Show "No items detected" message
             self.items_tree.insert("", "end", values=(
-                item.name,
-                f"{item.quantity:,}",
-                f"{unit_price:,} gp",
-                f"{total_item_value:,} gp",
-                item.category.title()
+                "No items detected",
+                "--",
+                "--",
+                "--",
+                "Try activating text intelligence"
             ))
+            
+            # Update value summary for no items
+            value_updates = {
+                "Total Value": "0 gp",
+                "Valuable Items": "0",
+                "Average Item Value": "0 gp", 
+                "Most Valuable": "None"
+            }
+        else:
+            # Handle detected items
+            item_count = len(items)
+            
+            # Update value summary
+            value_updates = {
+                "Total Value": "-- gp (price lookup needed)",
+                "Valuable Items": f"{item_count}",
+                "Average Item Value": "-- gp",
+                "Most Valuable": items[0].get('name', 'Unknown') if items else "None"
+            }
+            
+            # Add items to table
+            for i, item in enumerate(items):
+                if isinstance(item, dict):
+                    # Optimized format
+                    name = item.get('name', f'Unknown_item_{i}')
+                    confidence = item.get('confidence', 0)
+                    position = item.get('position', (0, 0))
+                    
+                    self.items_tree.insert("", "end", values=(
+                        name,
+                        "1",  # Default quantity until we parse it
+                        "-- gp",  # Price lookup needed
+                        "-- gp",
+                        f"Conf: {confidence:.2f}"
+                    ))
+                else:
+                    # Legacy format (if any)
+                    unit_price = getattr(item, 'ge_price', 0) or 0
+                    quantity = getattr(item, 'quantity', 1)
+                    total_item_value = unit_price * quantity
+                    
+                    self.items_tree.insert("", "end", values=(
+                        getattr(item, 'name', 'Unknown'),
+                        f"{quantity:,}",
+                        f"{unit_price:,} gp",
+                        f"{total_item_value:,} gp",
+                        getattr(item, 'category', 'Unknown').title()
+                    ))
+        
+        # Update value summary labels
+        for stat_name, value in value_updates.items():
+            if stat_name in self.value_labels:
+                self.value_labels[stat_name].configure(text=f"{stat_name}: {value}")
     
     def update_alerts_display(self):
         """Update the alerts tab"""

@@ -85,6 +85,7 @@ class YOLODetector:
     def _load_model(self) -> None:
         """Load YOLO model"""
         try:
+            # Simple direct loading first - works with most PyTorch versions
             if self.model_path and Path(self.model_path).exists():
                 # Load custom trained model
                 self.model = YOLO(self.model_path)
@@ -102,8 +103,55 @@ class YOLODetector:
                 self.class_names = list(self.model.names.values())
             
         except Exception as e:
-            logger.error(f"Failed to load YOLO model: {e}")
-            self.model = None
+            logger.error(f"Failed to load YOLO model with direct loading: {e}")
+            # Fallback: try with PyTorch 2.6 compatibility fixes
+            try:
+                logger.info("Attempting PyTorch 2.6 compatibility fallback...")
+                
+                # Method 1: Try with safe_globals
+                try:
+                    from ultralytics.nn.tasks import DetectionModel
+                    with torch.serialization.safe_globals([DetectionModel]):
+                        if self.model_path and Path(self.model_path).exists():
+                            self.model = YOLO(self.model_path)
+                            logger.info(f"Loaded custom YOLO model (safe_globals): {self.model_path}")
+                        else:
+                            self.model = YOLO('yolov8n.pt')
+                            logger.info("Loaded pre-trained YOLOv8n model (safe_globals)")
+                except Exception:
+                    # Method 2: Try with weights_only=False
+                    logger.info("Trying with weights_only=False...")
+                    original_load = torch.load
+                    
+                    def safe_load(*args, **kwargs):
+                        kwargs['weights_only'] = False
+                        return original_load(*args, **kwargs)
+                    
+                    torch.load = safe_load
+                    
+                    try:
+                        if self.model_path and Path(self.model_path).exists():
+                            self.model = YOLO(self.model_path)
+                            logger.info(f"Loaded custom YOLO model (weights_only=False): {self.model_path}")
+                        else:
+                            self.model = YOLO('yolov8n.pt')
+                            logger.info("Loaded pre-trained YOLOv8n model (weights_only=False)")
+                    finally:
+                        # Always restore original torch.load
+                        torch.load = original_load
+                
+                # Move to device
+                if self.model is not None:
+                    self.model.to(self.device)
+                    
+                    # Get class names
+                    if hasattr(self.model, 'names'):
+                        self.class_names = list(self.model.names.values())
+                        
+            except Exception as fallback_error:
+                logger.error(f"All YOLO loading methods failed: {fallback_error}")
+                logger.warning("YOLO model will not be available for object detection")
+                self.model = None
     
     def detect_objects(self, image: np.ndarray, 
                       confidence: Optional[float] = None,

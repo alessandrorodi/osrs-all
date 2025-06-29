@@ -1,0 +1,259 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# OSRS Bot Framework - Project Overview & Vision
+
+## 🎯 Ultimate Goal
+Create the most advanced, intelligent, and adaptive AI agent that can:
+- Play Old School RuneScape completely autonomously  
+- Make intelligent decisions like a human player
+- Adapt to any content, from early game to endgame
+- Handle complex scenarios like PvP, raids, and minigames
+- Learn and improve from experience
+- Operate safely and undetected
+
+## 🏗️ Current Project Architecture
+
+### Core Framework Structure
+```
+osrs-all/
+├── core/                    # Framework foundation
+│   ├── screen_capture.py    # High-performance screen capture (✅ Working)
+│   ├── automation.py        # Human-like mouse/keyboard control
+│   ├── computer_vision.py   # Template matching and detection  
+│   ├── text_intelligence.py # AI text analysis system (✅ Working)
+│   └── bot_base.py         # Abstract bot base class
+├── vision/                 # Computer vision modules
+│   ├── osrs_ocr.py         # OSRS text recognition (✅ Working)
+│   ├── runelite_vision.py  # Basic RuneLite interface detection  
+│   ├── advanced_runelite_vision.py  # ML-based detection
+│   └── ultra_advanced_vision.py    # 🚧 Latest attempt - partial fixes
+├── gui/                    # Modern GUI interface (✅ Working)
+│   ├── main_window.py      # CustomTkinter interface
+│   ├── handlers.py         # Event handling
+│   └── widgets/            # GUI components
+├── bots/                   # Bot implementations
+└── tests/                  # Comprehensive test suite
+```
+
+### Technology Stack
+- **Computer Vision**: OpenCV, YOLO (planned), EasyOCR
+- **GUI**: CustomTkinter (dark theme, modern interface)
+- **AI/ML**: scikit-learn, PyTorch (for future YOLO integration)
+- **Performance**: GPU acceleration (RTX 4090 optimized)
+- **Testing**: pytest with comprehensive coverage
+
+## 🚧 Current Status & Issues
+
+### ✅ What's Working
+1. **Text Intelligence System** - Fully functional OCR and text analysis
+   - Real-time chat detection and parsing
+   - XP tracking and calculations  
+   - Item recognition and value calculation
+   - GPU-accelerated processing (RTX 4090)
+   - Sub-100ms processing times
+
+2. **GUI Framework** - Professional interface with real-time monitoring
+   - Dark theme CustomTkinter interface
+   - Live text intelligence panel
+   - Performance monitoring
+   - Log management and filtering
+
+3. **Screen Capture** - High-performance capture system
+   - MSS-based capture with threading
+   - Automatic client detection and calibration
+   - Proper RuneLite window focusing
+
+### ❌ Current Issues (Need Fixing)
+
+#### 1. RuneLite Vision Detection Problems
+**Location**: `vision/ultra_advanced_vision.py`
+
+**Orb Detection Issues**:
+- Current positions: `(0.88, 0.05, 0.05, 0.08)` etc.
+- **Problem**: Blue detection boxes not aligned with actual health/prayer/energy/special orbs
+- **Need**: Pixel-perfect positioning based on actual RuneLite UI layout
+
+**Tab Detection Issues**:
+- Reports "Equipment" when Inventory tab is clearly active
+- Content-aware detection not working properly
+- **Need**: Better pattern recognition for active tab states
+
+#### 2. Computer Vision Accuracy
+- Template matching limitations
+- Need YOLO object detection implementation
+- Inconsistent detection across different client sizes
+
+#### 3. Next Phase Implementation Needed
+- YOLO-based NPC/item detection
+- Advanced AI decision making
+- Reinforcement learning integration
+
+## 🛠️ Development Phases
+
+### Phase 1: Foundation (✅ COMPLETED)
+- Modular bot framework with computer vision
+- Screen capture and automation systems
+- Safety mechanisms and human-like behaviors  
+- Text intelligence system with GPU acceleration
+- Professional GUI interface
+
+### Phase 2: Enhanced Computer Vision (🚧 IN PROGRESS)
+**Priority Fixes Needed**:
+1. **Fix RuneLite orb detection positions**
+   - Debug actual orb locations in RuneLite client
+   - Update coordinate ratios in `ultra_advanced_vision.py`
+   - Test with multiple client sizes
+
+2. **Fix tab detection logic**
+   - Improve content-aware tab detection
+   - Better pattern recognition for interface states
+   - Test inventory vs other tab detection
+
+3. **Implement YOLO object detection**
+   - Real-time NPC and item detection
+   - No more template matching limitations
+   - Self-improving detection capabilities
+
+### Phase 3: AI Decision Intelligence (Planned)
+- Goal-oriented planning systems
+- Risk assessment and management
+- Adaptive strategy implementation
+- Experience learning and improvement
+
+### Phase 4: Advanced Content Handling (Planned)  
+- Raid mechanics (TOB, COX, TOA)
+- PvP intelligence and prediction
+- Quest automation and puzzle solving
+- Economic intelligence and trading
+
+### Phase 5: Meta-Learning (Future)
+- Self-improving AI algorithms
+- Adaptation to game updates
+- Novel strategy discovery
+- Autonomous account progression
+
+## 🔍 Key Files to Understand
+
+### Core Vision System
+- `vision/ultra_advanced_vision.py` - Latest computer vision attempt (needs orb/tab fixes)
+- `vision/osrs_ocr.py` - Working text recognition system
+- `core/text_intelligence.py` - AI text analysis (fully functional)
+
+### GUI Framework  
+- `gui/main_window.py` - Main application window
+- `gui/widgets/text_overlay.py` - Text intelligence panel
+- `launch_gui.py` - Application entry point
+
+### Configuration
+- `config/settings.py` - Framework settings and detection parameters
+- `requirements-gpu.txt` - RTX 4090 optimized dependencies
+
+### Testing
+- `test_runelite_vision.py` - Latest vision system tests
+- `tests/test_osrs_ocr.py` - Text intelligence tests
+
+## 🎮 OSRS-Specific Knowledge
+
+### RuneLite Client Structure
+- **Game Viewport**: Left ~95% of client (NOT 85% - this was fixed)
+- **Client UI**: Right ~5% contains RuneLite-specific controls
+- **In-Game Interface**: Within game viewport, bottom-right area
+- **Orbs**: Health, Prayer, Energy, Special - located in top-right of game area
+- **Tabs**: Horizontal row at bottom of interface panel
+
+### Critical Detection Areas
+```python
+# CORRECTED viewport (95% not 85%)
+game_viewport = (0.0, 0.0, 0.95, 1.0)
+
+# Orb positions (NEED FIXING - not accurate)
+orbs = {
+    'health': (0.88, 0.05, 0.05, 0.08),   # Currently wrong
+    'prayer': (0.88, 0.15, 0.05, 0.08),  # Currently wrong  
+    'energy': (0.88, 0.25, 0.05, 0.08),  # Currently wrong
+    'special': (0.88, 0.35, 0.05, 0.08)  # Currently wrong
+}
+
+# Tab detection (NEEDS BETTER LOGIC)
+inventory_area = (0.82, 0.35, 0.13, 0.30)  # When inventory active
+```
+
+## 🚀 Getting Started (For Future Development)
+
+### 1. Environment Setup
+```bash
+# GPU setup (RTX 4090)
+pip install -r requirements-gpu.txt
+
+# Basic setup  
+pip install -r requirements.txt
+
+# Launch GUI
+python launch_gui.py
+```
+
+### 2. Testing Vision System
+```bash
+# Test latest vision system
+python test_runelite_vision.py
+
+# Run comprehensive tests
+pytest tests/ -v
+```
+
+### 3. Key Areas to Fix First
+1. **Orb Detection**: Debug and fix positions in `ultra_advanced_vision.py`
+2. **Tab Detection**: Improve content-aware detection logic
+3. **YOLO Integration**: Implement YOLOv8 for object detection
+
+### 4. Development Standards
+- **All features MUST have GUI access** - no command-line only
+- **Real-time feedback required** - status indicators and progress bars
+- **OSRS knowledge required** - research current game mechanics
+- **Comprehensive testing** - unit, integration, and performance tests
+- **GPU optimization** - leverage RTX 4090 for processing
+
+## 📊 Performance Targets
+
+### Text Intelligence (✅ Achieved)
+- Processing latency: <100ms
+- Cache efficiency: >80%
+- GPU utilization: >70%
+- Accuracy: >95%
+
+### Computer Vision (🎯 Targets)
+- Object detection: <50ms per frame
+- Template matching: >90% accuracy
+- Real-time processing: 30+ FPS
+- Multi-resolution support
+
+### Overall System
+- Memory usage: <2GB
+- CPU usage: <30% (with GPU acceleration)
+- Uptime: >99% reliability
+- Response time: <200ms user interactions
+
+## 🔧 Quick Reference Commands
+
+```bash
+# Launch main application
+python launch_gui.py
+
+# Test vision systems
+python test_runelite_vision.py
+
+# Run all tests
+pytest tests/ -v
+
+# GPU verification
+python -c "import torch; print(torch.cuda.is_available())"
+
+# Debug screen capture
+python tools/calibrate_client.py
+```
+
+This framework represents a solid foundation for building the ultimate OSRS AI agent. The text intelligence system is production-ready, the GUI framework is robust, and the architecture supports advanced AI integration. Focus on fixing the computer vision issues first, then proceed with YOLO integration and AI decision systems.
+

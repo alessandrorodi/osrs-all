@@ -270,8 +270,11 @@ class TestTextIntelligenceCore:
         """Test XP rate calculation"""
         core = OSRSTextIntelligenceCore()
         
-        # Add some mock XP events
+        # Set session start to 2 hours ago so we have sufficient time data
         current_time = time.time()
+        core.session_start = current_time - 7200  # 2 hours ago
+        
+        # Add some mock XP events
         events = [
             XPEvent('Attack', 100, current_time - 1800, source='combat'),  # 30 min ago
             XPEvent('Attack', 150, current_time - 900, source='combat'),   # 15 min ago
