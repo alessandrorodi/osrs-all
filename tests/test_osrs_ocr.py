@@ -23,73 +23,76 @@ from core.text_intelligence import (
 )
 
 
+# Module-level fixtures for all tests
+@pytest.fixture
+def mock_screenshot():
+    """Create a mock OSRS screenshot"""
+    # Create a 765x503 image (typical OSRS client size)
+    screenshot = np.zeros((503, 765, 3), dtype=np.uint8)
+    
+    # Add some basic color patterns to simulate OSRS interface
+    # Chat area (bottom)
+    screenshot[345:488, 7:513] = [40, 40, 40]  # Dark chat background
+    
+    # Inventory area (right side)
+    screenshot[205:467, 548:734] = [60, 60, 60]  # Inventory background
+    
+    # Health/prayer orbs (top left)
+    cv2.circle(screenshot, (38, 75), 30, (255, 0, 0), -1)  # Health orb
+    cv2.circle(screenshot, (38, 115), 30, (0, 0, 255), -1)  # Prayer orb
+    
+    return screenshot
+
+
+@pytest.fixture
+def sample_text_data():
+    """Sample text data for testing"""
+    return {
+        'timestamp': time.time(),
+        'chat_messages': [
+            ChatMessage(
+                player_name='TestPlayer',
+                message='Hello world!',
+                chat_type='public',
+                timestamp=time.time()
+            ),
+            ChatMessage(
+                player_name='System',
+                message='You gain 50 Attack XP.',
+                chat_type='game',
+                timestamp=time.time(),
+                is_system=True
+            )
+        ],
+        'items': [
+            ItemInfo(
+                name='Dragon scimitar',
+                quantity=1,
+                position=(600, 250),
+                ge_price=100000,
+                is_valuable=True,
+                category='weapon'
+            ),
+            ItemInfo(
+                name='Shark',
+                quantity=20,
+                position=(620, 270),
+                ge_price=800,
+                category='food'
+            )
+        ],
+        'player_stats': PlayerStats(
+            health_current=50,
+            health_max=99,
+            prayer_current=30,
+            prayer_max=70,
+            combat_level=85
+        )
+    }
+
+
 class TestOSRSTextIntelligence:
     """Test cases for OSRS text intelligence"""
-    
-    @pytest.fixture
-    def mock_screenshot(self):
-        """Create a mock OSRS screenshot"""
-        # Create a 765x503 image (typical OSRS client size)
-        screenshot = np.zeros((503, 765, 3), dtype=np.uint8)
-        
-        # Add some basic color patterns to simulate OSRS interface
-        # Chat area (bottom)
-        screenshot[345:488, 7:513] = [40, 40, 40]  # Dark chat background
-        
-        # Inventory area (right side)
-        screenshot[205:467, 548:734] = [60, 60, 60]  # Inventory background
-        
-        # Health/prayer orbs (top left)
-        cv2.circle(screenshot, (38, 75), 30, (255, 0, 0), -1)  # Health orb
-        cv2.circle(screenshot, (38, 115), 30, (0, 0, 255), -1)  # Prayer orb
-        
-        return screenshot
-    
-    @pytest.fixture
-    def sample_text_data(self):
-        """Sample text data for testing"""
-        return {
-            'timestamp': time.time(),
-            'chat_messages': [
-                ChatMessage(
-                    player_name='TestPlayer',
-                    message='Hello world!',
-                    chat_type='public',
-                    timestamp=time.time()
-                ),
-                ChatMessage(
-                    player_name='System',
-                    message='You gain 50 Attack XP.',
-                    chat_type='game',
-                    timestamp=time.time(),
-                    is_system=True
-                )
-            ],
-            'items': [
-                ItemInfo(
-                    name='Dragon scimitar',
-                    quantity=1,
-                    position=(600, 250),
-                    ge_price=100000,
-                    is_valuable=True,
-                    category='weapon'
-                ),
-                ItemInfo(
-                    name='Shark',
-                    quantity=20,
-                    position=(620, 270),
-                    ge_price=800,
-                    category='food'
-                )
-            ],
-            'player_stats': PlayerStats(
-                health_current=50,
-                health_max=99,
-                prayer_current=30,
-                prayer_max=70,
-                combat_level=85
-            )
-        }
     
     def test_osrs_text_region_initialization(self):
         """Test OSRS text region configuration"""
@@ -342,7 +345,7 @@ class TestTextIntelligenceCore:
         core = OSRSTextIntelligenceCore()
         
         # Test different importance levels
-        assert core._assess_message_importance('Help! I'm dying!') == 'critical'
+        assert core._assess_message_importance("Help! I'm dying!") == 'critical'
         assert core._assess_message_importance('Selling rare item') == 'high'
         assert core._assess_message_importance('Where is the bank?') == 'medium'
         assert core._assess_message_importance('Nice weather today') == 'low'
