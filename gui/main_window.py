@@ -30,6 +30,14 @@ except ImportError as e:
     print("Please install: pip install --user customtkinter pillow matplotlib")
     sys.exit(1)
 
+# Import new performance monitor tab
+try:
+    from gui.tabs.performance_monitor_tab import create_performance_monitor_tab
+    PERFORMANCE_MONITOR_AVAILABLE = True
+except ImportError as e:
+    print(f"Performance monitor tab not available: {e}")
+    PERFORMANCE_MONITOR_AVAILABLE = False
+
 from core.screen_capture import screen_capture
 from core.computer_vision import cv_system
 from core.bot_base import BotBase, BotState
@@ -138,6 +146,9 @@ class OSRSBotGUI:
         self.create_performance_tab()
         self.create_logs_tab()
         self.create_templates_tab()
+        
+        # Add new performance monitor tab
+        self.create_performance_monitor_tab()
     
     def create_dashboard_tab(self):
         """Create the main dashboard tab"""
@@ -1047,6 +1058,32 @@ class OSRSBotGUI:
     def import_template(self): pass
     def refresh_templates(self): pass
     def on_template_select(self, event): pass
+
+    def create_performance_monitor_tab(self):
+        """Create the comprehensive performance monitor tab"""
+        if not PERFORMANCE_MONITOR_AVAILABLE:
+            return
+        
+        try:
+            # Create the performance monitor tab
+            perf_monitor_tab = self.notebook.add("🔥 Performance Monitor")
+            
+            # Create the performance monitor widget
+            self.performance_monitor = create_performance_monitor_tab(perf_monitor_tab)
+            self.performance_monitor.pack(fill="both", expand=True)
+            
+            logger.info("Performance monitor tab created successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to create performance monitor tab: {e}")
+            # Show error in a simple tab
+            error_tab = self.notebook.add("❌ Performance Monitor (Error)")
+            error_label = ctk.CTkLabel(
+                error_tab,
+                text=f"Performance Monitor initialization failed:\n{str(e)}\n\nPlease check the logs for more details.",
+                font=ctk.CTkFont(size=14)
+            )
+            error_label.pack(expand=True)
 
 
 def main():

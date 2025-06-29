@@ -19,6 +19,11 @@ torchvision>=0.10.0
 easyocr==1.7.0
 pytesseract==0.3.10
 
+# Performance Monitoring
+psutil>=5.9.0
+pynvml>=11.4.1
+GPUtil>=1.4.0
+
 # Deep Learning Utilities
 # transformers==4.21.0  # Commented out - requires Rust compiler
 # datasets==2.8.0       # Commented out - not currently used
