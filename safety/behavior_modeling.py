@@ -6,7 +6,58 @@ Sophisticated behavior modeling using AI to simulate human-like patterns and avo
 Leverages RTX 4090 for real-time behavioral analysis and pattern recognition.
 """
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    # Fallback for numpy functions
+    class np:
+        @staticmethod
+        def sqrt(x):
+            import math
+            return math.sqrt(x)
+        
+        @staticmethod
+        def mean(data):
+            return sum(data) / len(data) if data else 0
+        
+        @staticmethod
+        def std(data):
+            if not data:
+                return 0
+            mean_val = sum(data) / len(data)
+            variance = sum((x - mean_val) ** 2 for x in data) / len(data)
+            return variance ** 0.5
+        
+        @staticmethod
+        def polyfit(x, y, deg):
+            # Simple linear regression for degree 1
+            if deg == 1 and len(x) == len(y) and len(x) > 1:
+                n = len(x)
+                sum_x = sum(x)
+                sum_y = sum(y)
+                sum_xy = sum(x[i] * y[i] for i in range(n))
+                sum_x2 = sum(xi * xi for xi in x)
+                
+                slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
+                intercept = (sum_y - slope * sum_x) / n
+                return [slope, intercept]
+            return [0, 0]
+        
+        @staticmethod
+        def arange(n):
+            return list(range(n))
+        
+        @staticmethod
+        def sin(x):
+            import math
+            return math.sin(x)
+        
+        @staticmethod
+        def random():
+            import random
+            return random.random()
+        
+        pi = 3.14159265359
 import time
 import random
 import json
@@ -120,6 +171,7 @@ class HumanBehaviorModel:
     
     def _initialize_models(self):
         """Initialize AI models for behavior prediction"""
+        global GPU_AVAILABLE
         if not GPU_AVAILABLE:
             logger.warning("GPU not available, using simplified behavior modeling")
             return
@@ -161,6 +213,7 @@ class HumanBehaviorModel:
         self.mouse_movements.append(movement)
         
         # Analyze in real-time if GPU available
+        global GPU_AVAILABLE
         if GPU_AVAILABLE and len(self.mouse_movements) % 10 == 0:
             self._analyze_movement_patterns()
     
@@ -183,14 +236,16 @@ class HumanBehaviorModel:
     def generate_human_movement(self, start_pos: Tuple[int, int], 
                               end_pos: Tuple[int, int]) -> List[Tuple[int, int]]:
         """Generate human-like mouse movement path"""
-        if GPU_AVAILABLE and self.movement_model:
+        global GPU_AVAILABLE
+        if GPU_AVAILABLE and torch is not None and self.movement_model:
             return self._ai_generate_movement(start_pos, end_pos)
         else:
             return self._fallback_generate_movement(start_pos, end_pos)
     
     def get_next_action_timing(self, action_type: str, context: Optional[Dict[str, Any]] = None) -> float:
         """Get human-like timing for next action"""
-        if GPU_AVAILABLE and self.timing_model:
+        global GPU_AVAILABLE
+        if GPU_AVAILABLE and torch is not None and self.timing_model:
             return self._ai_predict_timing(action_type, context)
         else:
             return self._fallback_predict_timing(action_type)
@@ -206,7 +261,8 @@ class HumanBehaviorModel:
         time_since_break = self._time_since_last_break()
         
         # AI-powered break prediction
-        if GPU_AVAILABLE and self.attention_model:
+        global GPU_AVAILABLE
+        if GPU_AVAILABLE and torch is not None and self.attention_model:
             break_probability = self._ai_predict_break_need(attention_score, time_since_break)
         else:
             break_probability = self._fallback_break_prediction(attention_score, time_since_break)
@@ -220,7 +276,8 @@ class HumanBehaviorModel:
     
     def get_risk_assessment(self) -> Dict[str, float]:
         """Get current behavioral risk assessment"""
-        if GPU_AVAILABLE and self.risk_model:
+        global GPU_AVAILABLE
+        if GPU_AVAILABLE and torch is not None and self.risk_model:
             return self._ai_risk_assessment()
         else:
             return self._fallback_risk_assessment()
@@ -280,6 +337,9 @@ class HumanBehaviorModel:
     def _ai_generate_movement(self, start_pos: Tuple[int, int], 
                             end_pos: Tuple[int, int]) -> List[Tuple[int, int]]:
         """AI-powered movement generation"""
+        if torch is None:
+            return self._fallback_generate_movement(start_pos, end_pos)
+            
         try:
             # Prepare input features
             features = torch.tensor([
@@ -340,6 +400,9 @@ class HumanBehaviorModel:
     
     def _ai_predict_timing(self, action_type: str, context: Optional[Dict[str, Any]] = None) -> float:
         """AI-powered timing prediction"""
+        if torch is None:
+            return self._fallback_predict_timing(action_type)
+            
         try:
             # Feature engineering
             features = [
@@ -528,6 +591,9 @@ class HumanBehaviorModel:
     
     def _ai_predict_break_need(self, attention_score: float, time_since_break: float) -> float:
         """AI-powered break need prediction"""
+        if torch is None:
+            return self._fallback_break_prediction(attention_score, time_since_break)
+            
         try:
             features = torch.tensor([
                 attention_score,
@@ -561,6 +627,9 @@ class HumanBehaviorModel:
     
     def _ai_risk_assessment(self) -> Dict[str, float]:
         """AI-powered risk assessment"""
+        if torch is None:
+            return self._fallback_risk_assessment()
+            
         try:
             # Prepare features for risk model
             features = [
@@ -607,79 +676,117 @@ class HumanBehaviorModel:
         }
 
 
-class MouseMovementPredictor(nn.Module):
-    """Neural network for predicting human-like mouse movements"""
-    
-    def __init__(self, input_size=6, hidden_size=128, output_size=20):
-        super().__init__()
-        self.network = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, output_size)
-        )
-    
-    def forward(self, x):
-        return self.network(x)
+if nn is not None:
+    class MouseMovementPredictor(nn.Module):
+        """Neural network for predicting human-like mouse movements"""
+        
+        def __init__(self, input_size=6, hidden_size=128, output_size=20):
+            super().__init__()
+            self.network = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, output_size)
+            )
+        
+        def forward(self, x):
+            return self.network(x)
+else:
+    class MouseMovementPredictor:
+        """Fallback class when nn is not available"""
+        def __init__(self, *args, **kwargs):
+            pass
+        def to(self, device):
+            return self
+        def __call__(self, x):
+            return None
 
 
-class TimingPredictor(nn.Module):
-    """Neural network for predicting human-like timing"""
-    
-    def __init__(self, input_size=6, hidden_size=64, output_size=1):
-        super().__init__()
-        self.network = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, output_size),
-            nn.Sigmoid()
-        )
-    
-    def forward(self, x):
-        return self.network(x)
+if nn is not None:
+    class TimingPredictor(nn.Module):
+        """Neural network for predicting human-like timing"""
+        
+        def __init__(self, input_size=6, hidden_size=64, output_size=1):
+            super().__init__()
+            self.network = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, output_size),
+                nn.Sigmoid()
+            )
+        
+        def forward(self, x):
+            return self.network(x)
 
 
-class AttentionModel(nn.Module):
-    """Neural network for modeling attention patterns"""
-    
-    def __init__(self, input_size=5, hidden_size=64, output_size=1):
-        super().__init__()
-        self.network = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.ReLU(),
-            nn.Linear(hidden_size // 2, output_size)
-        )
-    
-    def forward(self, x):
-        return self.network(x)
+    class AttentionModel(nn.Module):
+        """Neural network for modeling attention patterns"""
+        
+        def __init__(self, input_size=5, hidden_size=64, output_size=1):
+            super().__init__()
+            self.network = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, hidden_size // 2),
+                nn.ReLU(),
+                nn.Linear(hidden_size // 2, output_size)
+            )
+        
+        def forward(self, x):
+            return self.network(x)
 
 
-class RiskAssessmentModel(nn.Module):
-    """Neural network for risk assessment"""
-    
-    def __init__(self, input_size=5, hidden_size=64, output_size=3):
-        super().__init__()
-        self.network = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.ReLU(),
-            nn.Linear(hidden_size // 2, output_size)
-        )
-    
-    def forward(self, x):
-        return self.network(x)
+    class RiskAssessmentModel(nn.Module):
+        """Neural network for risk assessment"""
+        
+        def __init__(self, input_size=5, hidden_size=64, output_size=3):
+            super().__init__()
+            self.network = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_size, hidden_size // 2),
+                nn.ReLU(),
+                nn.Linear(hidden_size // 2, output_size)
+            )
+        
+        def forward(self, x):
+            return self.network(x)
+else:
+    class TimingPredictor:
+        """Fallback class when nn is not available"""
+        def __init__(self, *args, **kwargs):
+            pass
+        def to(self, device):
+            return self
+        def __call__(self, x):
+            return None
+
+    class AttentionModel:
+        """Fallback class when nn is not available"""
+        def __init__(self, *args, **kwargs):
+            pass
+        def to(self, device):
+            return self
+        def __call__(self, x):
+            return None
+
+    class RiskAssessmentModel:
+        """Fallback class when nn is not available"""
+        def __init__(self, *args, **kwargs):
+            pass
+        def to(self, device):
+            return self
+        def __call__(self, x):
+            return None
 
 
 class BehaviorAnalyzer:

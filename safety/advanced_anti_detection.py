@@ -18,6 +18,11 @@ except ImportError:
         def sin(x):
             import math
             return math.sin(x)
+        
+        @staticmethod
+        def mean(data):
+            return sum(data) / len(data) if data else 0
+        
         pi = 3.14159265359
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional, Any, Callable
