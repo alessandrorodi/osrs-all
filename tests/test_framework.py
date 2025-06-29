@@ -116,7 +116,7 @@ class TestGUIComponents:
         expected_files = [
             "gui_app.py",
             "main_window.py", 
-            "tabs.py",
+            "tab_functions.py",
             "handlers.py"
         ]
         

@@ -160,7 +160,7 @@ class TestOSRSTextIntelligence:
         intelligence = OSRSTextIntelligence(device='cpu')
         
         region_names = ['public_chat', 'inventory_items', 'equipment_stats']
-        groups = intelligence._group_regions_by_priority(region_names)
+        groups = intelligence._group_regions_by_priority(region_names, intelligence.text_regions)
         
         # Check that high priority regions are grouped separately
         assert 1 in groups  # High priority
