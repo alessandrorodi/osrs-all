@@ -1,360 +1,224 @@
-# OSRS Bot Framework
+# OSRS Bot Framework 🎮
 
-A production-ready, modular framework for creating Old School RuneScape automation bots using advanced computer vision, machine learning, and human-like automation.
+## Overview
+A comprehensive, GPU-accelerated framework for creating intelligent Old School RuneScape bots with advanced computer vision, text intelligence, and modern GUI interface.
 
-## 🎯 **Features**
+### Key Features
+- 🧠 **AI Text Intelligence** - Real-time OCR and text analysis system
+- 👁️ **Advanced Computer Vision** - RuneLite client integration with ML-based detection
+- 🖥️ **Modern GUI** - Dark theme CustomTkinter interface with live monitoring
+- ⚡ **GPU Acceleration** - RTX 4090 optimized for <100ms processing times
+- 🎯 **OSRS-Specific** - Designed specifically for RuneLite and vanilla OSRS clients
+- 🛡️ **Safety First** - Human-like behavior patterns and anti-detection measures
 
-### **Core Framework**
-- **🤖 Modular Architecture**: Easy to create new bots by extending base classes
-- **👁️ Advanced Computer Vision**: Template matching, object detection, and visual debugging
-- **🖱️ Human-like Automation**: Bezier curve movements, realistic timing, anti-detection
-- **🛡️ Safety Systems**: Emergency stops, failsafes, and behavior randomization
-- **📊 Performance Monitoring**: Real-time analytics, success rates, and optimization
-- **🎮 OSRS Specific**: Optimized for Old School RuneScape client detection
+## Quick Start
 
-### **Modern GUI Interface**
-- **🖥️ Dark Theme**: Professional CustomTkinter interface
-- **📱 Real-time Dashboard**: Live system monitoring and bot management
-- **📊 Performance Charts**: Visual analytics and performance tracking
-- **👁️ Computer Vision Testing**: Live detection preview and debugging
-- **📋 Log Management**: Integrated log viewer with filtering
-- **🖼️ Template Browser**: Visual template management and creation
+### 1. Installation
 
-## 🚀 **Quick Start**
-
-### **Installation**
+**For RTX 4090/GPU Users:**
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd osrs-bot-framework
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run initial setup
-python setup.py
+git clone https://github.com/your-repo/osrs-all.git
+cd osrs-all
+pip install -r requirements-gpu.txt
 ```
 
-### **Launch GUI (Recommended)**
+**For CPU-Only Users:**
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Launch GUI
 ```bash
 python launch_gui.py
 ```
 
-### **Command Line Setup**
+### 3. Test Vision System
 ```bash
-# 1. Calibrate OSRS client
-python tools/calibrate_client.py
-
-# 2. Create detection templates
-python tools/template_creator.py
-
-# 3. Run example bot
-python bots/example_bot.py
+python test_runelite_vision.py
 ```
 
-## 🖥️ **GUI Interface**
+## Current Status
 
-### **Dashboard Tab**
-- **🔴/🟢 System Status**: OSRS client connection, screen capture, computer vision
-- **📊 Quick Stats**: Performance metrics, bot count, system health
-- **🛑 Emergency Controls**: Immediate stop for all running bots
+### ✅ Working Features
+- **Text Intelligence System** - Fully functional with GPU acceleration
+- **GUI Framework** - Professional interface with real-time monitoring  
+- **Screen Capture** - High-performance capture with RuneLite integration
+- **OCR Processing** - Chat, items, XP tracking, and interface detection
 
-### **Bots Tab**
-- **➕ Bot Management**: Create, load, and configure bots
-- **📊 Bot List**: Status, runtime, actions performed, error counts
-- **▶️ Controls**: Start, pause, stop individual bots
+### 🚧 In Progress
+- **Computer Vision Accuracy** - Orb and tab detection needs refinement
+- **YOLO Integration** - Transitioning from template matching to ML-based detection
+- **AI Decision Systems** - Planning and strategy implementation
 
-### **Vision Tab**
-- **👁️ Live Testing**: Real-time computer vision with overlay
-- **📷 Detection**: Test template matching and object recognition
-- **🎯 Debug View**: Confidence scores and bounding boxes
-
-### **Performance Tab**
-- **📈 Real-time Charts**: Actions/min, success rates, runtime tracking
-- **📊 Analytics**: Multi-bot comparison and performance optimization
-- **💾 Data Export**: Save performance metrics for analysis
-
-### **Logs Tab**
-- **📋 Live Logs**: Real-time log viewing with syntax highlighting
-- **🔍 Filtering**: Filter by level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-- **💾 Export**: Save logs for debugging and analysis
-
-### **Templates Tab**
-- **🖼️ Template Browser**: Visual preview of all detection templates
-- **➕ Create Templates**: Launch template creation tool
-- **📂 Import/Export**: Manage template files
-
-## 🏗️ **Architecture**
+## Project Structure
 
 ```
-osrs-bot-framework/
-├── core/              # Framework core components
-│   ├── screen_capture.py    # High-performance screen capture
-│   ├── automation.py        # Human-like mouse/keyboard control
-│   ├── computer_vision.py   # Template matching and detection
-│   └── bot_base.py         # Abstract bot base class
-├── gui/               # Modern GUI interface
-│   ├── main_window.py      # Main application window
-│   ├── tabs.py            # Tab management system
-│   └── handlers.py        # Event handling
-├── vision/            # Computer vision modules
-│   └── detectors/         # Specialized detection algorithms
-├── bots/              # Bot implementations
-│   └── example_bot.py     # Example combat bot
-├── tools/             # Development and debugging tools
-│   ├── calibrate_client.py # OSRS client calibration
-│   └── template_creator.py # Interactive template creation
-├── config/            # Configuration files
-│   ├── settings.py        # Framework settings
-│   └── *.yaml            # Bot configurations
-├── utils/             # Utility functions
-│   └── logging.py         # Comprehensive logging system
-└── data/              # Templates, models, and data
-    ├── templates/         # Detection template images
-    └── models/           # AI models (future)
+osrs-all/
+├── core/                    # Framework foundation
+│   ├── text_intelligence.py # AI text analysis (✅ Working)
+│   ├── screen_capture.py    # High-performance capture
+│   └── automation.py        # Human-like controls
+├── vision/                  # Computer vision modules
+│   ├── osrs_ocr.py         # Text recognition (✅ Working)
+│   └── ultra_advanced_vision.py # Latest CV system (needs fixes)
+├── gui/                     # Modern interface (✅ Working)
+├── bots/                    # Bot implementations
+└── tests/                   # Comprehensive test suite
 ```
 
-## 🤖 **Creating Your First Bot**
+## Key Components
 
-### **1. Basic Bot Structure**
+### Text Intelligence System
+Real-time OCR and analysis with:
+- Chat message parsing and filtering
+- XP tracking and rate calculations
+- Item recognition and value assessment
+- Interface state detection
+- Alert system for important events
+
+### Computer Vision
+Advanced detection capabilities:
+- RuneLite client integration
+- Interface element detection (tabs, orbs, inventory)
+- Multi-resolution support
+- Template matching with ML enhancement
+- Real-time processing optimization
+
+### GUI Framework
+Professional interface featuring:
+- Dark theme CustomTkinter design
+- Live text intelligence monitoring
+- Performance metrics and logging
+- Configuration management
+- Real-time data visualization
+
+## Usage Examples
+
+### Basic Text Intelligence
 ```python
-from core.bot_base import BotBase
-from utils.logging import get_logger
+from vision.osrs_ocr import osrs_text_intelligence
+from core.text_intelligence import text_intelligence
 
-class MyBot(BotBase):
-    def __init__(self, config=None):
-        super().__init__("MyBot", config)
-        self.logger = get_logger(__name__)
-    
-    def initialize(self) -> bool:
-        """Setup your bot here"""
-        self.logger.info("Bot initializing")
-        return True
-    
-    def execute_cycle(self) -> bool:
-        """Main bot logic goes here"""
-        # Your bot logic
-        if self.should_eat():
-            self.eat_food()
-        if self.target_available():
-            self.attack_target()
-        return True
-    
-    def should_eat(self) -> bool:
-        """Check if we need to eat food"""
-        # Implement health checking logic
-        pass
-    
-    def eat_food(self):
-        """Eat food from inventory"""
-        # Implement eating logic
-        pass
+# Capture and analyze
+screenshot = capture_osrs_screen()
+text_data = osrs_text_intelligence.analyze_game_text(screenshot)
+intelligence = text_intelligence.analyze_text_intelligence(text_data)
 
-if __name__ == "__main__":
-    bot = MyBot()
-    bot.start()
+# Access results
+print(f"XP gained: {intelligence['xp_analysis']['session_xp']}")
+print(f"Chat messages: {len(text_data['chat_messages'])}")
 ```
 
-### **2. Bot Configuration (YAML)**
-```yaml
-name: "my_combat_bot"
-enabled: true
-
-settings:
-  target_monster: "goblin"
-  food_item: "bread"
-  health_threshold: 50
-  combat_style: "aggressive"
-
-templates:
-  - "goblin"
-  - "bread" 
-  - "health_bar"
-
-regions:
-  inventory: [548, 205, 190, 261]
-  minimap: [570, 9, 146, 151]
-  chat: [7, 345, 506, 120]
-
-safety:
-  emergency_health: 20
-  max_runtime: 3600  # 1 hour
-  break_interval: 1800  # 30 minutes
-```
-
-## 👁️ **Computer Vision**
-
-### **Template Matching**
+### Computer Vision Detection
 ```python
-from core.computer_vision import ComputerVision
+from vision.ultra_advanced_vision import UltraAdvancedVision
 
-cv = ComputerVision()
+vision = UltraAdvancedVision()
+screenshot = capture_osrs_screen()
+game_state = vision.analyze_game_state(screenshot)
 
-# Find objects in screenshot
-results = cv.find_template("goblin", screenshot, confidence=0.8)
-if results:
-    x, y, confidence = results[0]
-    print(f"Found goblin at ({x}, {y}) with {confidence:.2f} confidence")
+print(f"Active tab: {game_state.active_tab}")
+print(f"Health: {game_state.player_status.health}")
+print(f"Items found: {len(game_state.items)}")
 ```
 
-### **Creating Templates**
-1. **Launch template creator**: `python tools/template_creator.py`
-2. **Capture screenshot** of your OSRS client
-3. **Select objects** by clicking and dragging
-4. **Save with descriptive names** (e.g., "goblin", "bread", "bank_booth")
-5. **Test templates** to verify detection accuracy
+## Development Guidelines
 
-## 🛡️ **Safety Features**
+### Performance Standards
+- Text processing: <100ms
+- Computer vision: <50ms per frame
+- Memory usage: <2GB
+- GPU utilization: >70% (when available)
 
-### **Anti-Detection**
-- **Human-like movements**: Bezier curves with random variations
-- **Realistic timing**: Random delays and reaction times
-- **Behavior patterns**: Breaks, mistakes, and natural variations
-- **Focus monitoring**: Ensures client window is active
+### Code Quality
+- All features must have GUI integration
+- Comprehensive test coverage required
+- OSRS-specific knowledge and terminology
+- Human-like behavior patterns mandatory
 
-### **Emergency Controls**
-- **Emergency stop**: `Ctrl+C` or GUI emergency button
-- **Auto-logout**: On suspicious activity or errors
-- **Health monitoring**: Automatic food consumption
-- **Runtime limits**: Configurable maximum bot runtime
+### Testing
+```bash
+# Run all tests
+pytest tests/ -v
 
-### **Error Handling**
-- **Screenshot on error**: Automatic debug image capture
-- **Graceful recovery**: Attempt to recover from errors
-- **Comprehensive logging**: Detailed error tracking
-- **Failsafe mechanisms**: Multiple layers of protection
+# Test specific components
+pytest tests/test_osrs_ocr.py -v
+pytest tests/test_computer_vision.py -v
 
-## 📊 **Performance Monitoring**
-
-### **Real-time Metrics**
-- **Actions per minute**: Bot efficiency tracking
-- **Success rate**: Percentage of successful actions
-- **Error rate**: Errors per hour tracking
-- **Runtime statistics**: Uptime and performance history
-
-### **Visual Analytics**
-- **Performance charts**: Real-time graphical monitoring
-- **Comparison tools**: Multi-bot performance analysis
-- **Export capabilities**: Save data for external analysis
-- **Optimization suggestions**: Automated performance tips
-
-## 🔧 **Configuration**
-
-### **Framework Settings** (`config/settings.py`)
-```python
-# Screen capture settings
-SCREEN_CAPTURE = {
-    'method': 'mss',  # or 'pyautogui'
-    'region': None,   # Auto-detect or specify region
-    'fps_limit': 30
-}
-
-# Computer vision settings
-VISION = {
-    'template_threshold': 0.8,
-    'debug_images': True,
-    'max_detections': 10
-}
-
-# Automation settings
-AUTOMATION = {
-    'mouse_speed': 'human',  # 'fast', 'human', 'slow'
-    'click_delay': (0.1, 0.3),
-    'movement_variation': 0.1
-}
+# Performance benchmarks
+pytest tests/ -m performance -v
 ```
 
-### **Bot-Specific Settings**
-Each bot can have its own YAML configuration file with:
-- Target specifications
-- Inventory management
-- Combat settings
-- Safety parameters
-- Performance tuning
+## Architecture & Vision
 
-## 🚨 **Troubleshooting**
+This framework is designed as the foundation for building the ultimate autonomous OSRS AI agent. The current implementation provides:
 
-### **Common Issues**
+1. **Solid Foundation** - Production-ready text intelligence and GUI systems
+2. **Extensible Architecture** - Modular design supporting advanced AI integration
+3. **Performance Optimization** - GPU acceleration and real-time processing
+4. **OSRS Expertise** - Deep understanding of game mechanics and client behavior
 
-**"OSRS client not found"**
-- Ensure OSRS client is open and visible
-- Run `python tools/calibrate_client.py` to detect client
-- Check window title matches "Old School RuneScape"
+### Future Development Phases
+- **Phase 2**: Enhanced computer vision with YOLO object detection
+- **Phase 3**: AI decision intelligence with goal-oriented planning
+- **Phase 4**: Advanced content handling (raids, PvP, questing)
+- **Phase 5**: Meta-learning and autonomous progression
 
-**"Template not found"**
-- Create templates using `python tools/template_creator.py`
-- Verify template names match bot configuration
-- Test templates with Vision tab in GUI
+## GPU Acceleration
 
-**"Permission denied" errors**
-- Run as administrator (Windows)
-- Check antivirus software blocking screen capture
-- Ensure Python has necessary permissions
+### RTX 4090 Optimization
+The framework is specifically optimized for NVIDIA RTX 4090:
+- CUDA-enabled PyTorch for text processing
+- EasyOCR with GPU acceleration
+- Batch processing for multiple detection regions
+- Memory-efficient caching systems
 
-**Poor detection accuracy**
-- Create multiple templates for same object
-- Adjust confidence thresholds in settings
-- Test with different graphics settings
-- Use Vision tab to debug detection
+### Verification
+```bash
+# Check GPU availability
+python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}')"
 
-### **Getting Help**
-1. **Check logs**: Look in `logs/` directory for detailed error information
-2. **Enable debug mode**: Set `debug_images: True` in settings
-3. **Use GUI debugging**: Vision tab shows live detection results
-4. **Test components**: Use individual tools to isolate issues
+# Monitor performance
+python -c "from core.text_intelligence import text_intelligence; print(text_intelligence.get_performance_stats())"
+```
 
-## 🌟 **Advanced Features**
+## Safety & Ethics
 
-### **Multi-Bot Management**
-- Run multiple bots simultaneously
-- Coordinated bot strategies
-- Resource sharing and conflict resolution
-- Performance monitoring across all bots
+This framework is designed for:
+- Educational purposes and computer vision research
+- Understanding game automation techniques
+- Learning AI and machine learning concepts
 
-### **Custom Detectors**
-- Extend computer vision capabilities
-- Create specialized detection algorithms
-- Integrate machine learning models
-- Add new object recognition types
+**Important**: Always respect game terms of service and play responsibly.
 
-### **Plugin System**
-- Modular bot components
-- Shared functionality libraries
-- Community-developed extensions
-- Easy integration of new features
+## Contributing
 
-## 🛣️ **Roadmap**
+1. Fork the repository
+2. Create a feature branch
+3. Implement with comprehensive tests
+4. Ensure GUI integration
+5. Submit pull request with detailed description
 
-See [ROADMAP.md](ROADMAP.md) for the complete vision of evolving this framework into the ultimate AI gaming agent, including:
+## Dependencies
 
-- **Phase 2**: YOLOv8 object detection, OCR text recognition
-- **Phase 3**: Advanced AI decision making and learning
-- **Phase 4**: Complex content handling (raids, PvP, questing)
-- **Phase 5**: Meta-learning and autonomous gameplay
+### Core Requirements
+- Python 3.8+
+- OpenCV 4.8+
+- CustomTkinter
+- EasyOCR
+- PyTorch (GPU version recommended)
 
-## ⚖️ **Legal & Ethics**
+### Optional Enhancements
+- scikit-learn (for ML features)
+- YOLO (future object detection)
+- NumPy/Pandas (data analysis)
 
-**This framework is for educational and personal use only.**
+## License
 
-- **Respect Jagex's Terms of Service**
-- **Use at your own risk** - account bans are possible
-- **Consider impact on other players** - be respectful
-- **Educational purpose** - learn about AI, automation, and computer vision
-- **No guarantees** - framework provided as-is
-
-## 📜 **License**
-
-This project is for educational and personal use only. See the full terms in the project license.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-## 🎉 **Ready to Start?**
+**Ready to build the future of autonomous gaming?** 🚀
 
-1. **Install**: Follow the installation steps above
-2. **Launch GUI**: Run `python launch_gui.py`
-3. **Calibrate**: Use the calibration tool to detect your OSRS client
-4. **Create Templates**: Build your object detection library
-5. **Build Bots**: Start with the example bot and create your own
-6. **Monitor**: Use the GUI to track performance and debug issues
-
-**Welcome to the future of OSRS automation!** 🚀 
+For detailed development guidelines and project overview, see the Cursor Rules in `.cursor/rules/`. 

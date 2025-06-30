@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import mss
 import pyautogui
+import threading
 from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass
 import logging
@@ -50,7 +51,8 @@ class ScreenCapture:
     """High-performance screen capture for OSRS client"""
     
     def __init__(self):
-        self.sct = mss.mss()
+        # Use thread-local storage for MSS instances to prevent threading issues
+        self._local = threading.local()
         self.client_region: Optional[ClientRegion] = None
         self.last_capture_time = 0
         self.fps_limit = SCREEN_CAPTURE["fps"]
@@ -59,6 +61,16 @@ class ScreenCapture:
         # Performance tracking
         self.capture_times = []
         self.frame_count = 0
+        
+        # Warning tracking to avoid spam
+        self._large_client_warned = False
+    
+    @property
+    def sct(self):
+        """Get thread-local MSS instance"""
+        if not hasattr(self._local, 'sct'):
+            self._local.sct = mss.mss()
+        return self._local.sct
         
     def find_client_window(self) -> Optional[ClientRegion]:
         """
@@ -102,14 +114,16 @@ class ScreenCapture:
                     impact = adaptive_vision.get_performance_impact()
                     logger.info(f"Performance impact: {impact}")
                     
-                    if adaptive_vision.is_large_client():
+                    if adaptive_vision.is_large_client() and not self._large_client_warned:
                         logger.warning("Large client detected - consider smaller window for better performance")
                         recommendations = adaptive_vision.get_recommendations()
                         for rec in recommendations:
                             logger.info(f"💡 Recommendation: {rec}")
+                        self._large_client_warned = True
                 else:
-                    if region.width > 1000 or region.height > 600:
+                    if (region.width > 1000 or region.height > 600) and not self._large_client_warned:
                         logger.info("Large client detected - this may impact performance but will work")
+                        self._large_client_warned = True
             
             logger.info(f"Found OSRS client at {region.x}, {region.y} "
                        f"({region.width}x{region.height})")
@@ -127,20 +141,29 @@ class ScreenCapture:
         """
         logger.info("Calibrating client region...")
         
-        self.client_region = self.find_client_window()
-        
-        if self.client_region is None:
-            logger.error("Failed to find OSRS client window")
+        try:
+            self.client_region = self.find_client_window()
+            
+            if self.client_region is None:
+                logger.error(f"Failed to find OSRS client window with title: '{CLIENT_DETECTION['window_title']}'")
+                logger.info("Make sure RuneLite is open and not minimized")
+                return False
+            
+            logger.info(f"Found client at ({self.client_region.x}, {self.client_region.y}) "
+                       f"size {self.client_region.width}x{self.client_region.height}")
+            
+            # Test capture with the thread-safe MSS instance
+            test_image = self.capture_client()
+            if test_image is None:
+                logger.error("Failed to capture test image - screen capture not working")
+                return False
+            
+            logger.info(f"Client calibration successful! Screenshot: {test_image.shape}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error during client calibration: {e}")
             return False
-        
-        # Test capture
-        test_image = self.capture_client()
-        if test_image is None:
-            logger.error("Failed to capture test image")
-            return False
-        
-        logger.info(f"Client calibration successful. Region: {self.client_region}")
-        return True
     
     def capture_screen(self, region: Optional[Dict[str, int]] = None) -> Optional[np.ndarray]:
         """
@@ -159,10 +182,26 @@ class ScreenCapture:
             # Capture screen
             start_time = time.time()
             
-            if region:
-                screenshot = self.sct.grab(region)
-            else:
-                screenshot = self.sct.grab(self.sct.monitors[1])  # Primary monitor
+            try:
+                if region:
+                    logger.debug(f"Capturing region: {region}")
+                    screenshot = self.sct.grab(region)
+                else:
+                    screenshot = self.sct.grab(self.sct.monitors[1])  # Primary monitor
+            except Exception as grab_error:
+                logger.error(f"MSS grab failed: {grab_error}")
+                # Try creating a new MSS instance
+                try:
+                    logger.info("Attempting to reinitialize MSS...")
+                    self._local.sct = mss.mss()
+                    if region:
+                        screenshot = self.sct.grab(region)
+                    else:
+                        screenshot = self.sct.grab(self.sct.monitors[1])
+                    logger.info("MSS reinitialization successful")
+                except Exception as retry_error:
+                    logger.error(f"MSS reinitialization failed: {retry_error}")
+                    return None
             
             # Convert to numpy array (BGR format)
             image = np.array(screenshot)

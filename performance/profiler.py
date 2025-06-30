@@ -269,7 +269,9 @@ class GPUProfiler:
                 device_count = pynvml.nvmlDeviceGetCount()
                 for i in range(device_count):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-                    name = pynvml.nvmlDeviceGetName(handle).decode('utf-8')
+                    name_raw = pynvml.nvmlDeviceGetName(handle)
+                    # Handle both bytes and string returns from different pynvml versions
+                    name = name_raw.decode('utf-8') if isinstance(name_raw, bytes) else name_raw
                     if "RTX 4090" in name:
                         return True
             
@@ -317,7 +319,9 @@ class GPUProfiler:
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
                     
                     # Basic info
-                    name = pynvml.nvmlDeviceGetName(handle).decode('utf-8')
+                    name_raw = pynvml.nvmlDeviceGetName(handle)
+                    # Handle both bytes and string returns from different pynvml versions
+                    name = name_raw.decode('utf-8') if isinstance(name_raw, bytes) else name_raw
                     
                     # Utilization
                     util = pynvml.nvmlDeviceGetUtilizationRates(handle)

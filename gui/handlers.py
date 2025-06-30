@@ -134,14 +134,21 @@ def calibrate_client(self):
 def _run_calibration(self):
     """Run calibration in background thread"""
     try:
-        result = subprocess.run([sys.executable, "tools/calibrate_client.py"], 
-                              cwd=project_root, capture_output=True, text=True)
+        # Use built-in screen capture calibration instead of external tool
+        success = screen_capture.calibrate_client()
         
-        if result.returncode == 0:
+        if success:
             self.update_status("✅ Client calibration successful!")
+            # Test screenshot to verify
+            screenshot = screen_capture.capture_client()
+            if screenshot is not None:
+                self.update_status(f"✅ Screenshot test passed: {screenshot.shape}")
+            else:
+                self.update_status("⚠️ Calibration successful but screenshot test failed")
         else:
-            self.update_status("❌ Client calibration failed!")
+            self.update_status("❌ Client calibration failed - check if RuneLite is open")
     except Exception as e:
+        logger.error(f"Calibration error: {e}")
         self.update_status(f"❌ Calibration error: {e}")
 
 

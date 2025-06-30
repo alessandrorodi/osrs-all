@@ -143,6 +143,7 @@ class OSRSBotGUI:
         self.create_dashboard_tab()
         self.create_bots_tab()
         self.create_vision_tab()
+        self.create_text_intelligence_tab()
         self.create_performance_tab()
         self.create_logs_tab()
         self.create_templates_tab()
@@ -409,6 +410,34 @@ class OSRSBotGUI:
         
         self.vision_performance = ctk.CTkLabel(perf_frame, text="Performance: Ready")
         self.vision_performance.pack(pady=5)
+    
+    def create_text_intelligence_tab(self):
+        """Create the text intelligence tab"""
+        try:
+            # Import text intelligence widgets
+            from gui.widgets.text_overlay import TextIntelligencePanel
+            
+            # Create text intelligence tab
+            text_tab = self.notebook.add("🧠 Text Intelligence")
+            
+            # Create text intelligence panel
+            self.text_intelligence_panel = TextIntelligencePanel(text_tab)
+            self.text_intelligence_panel.pack(fill="both", expand=True)
+            
+            logger.info("Text Intelligence tab created successfully")
+            
+        except ImportError as e:
+            logger.warning(f"Text Intelligence widgets not available: {e}")
+            # Create placeholder tab
+            text_tab = self.notebook.add("🧠 Text Intelligence")
+            placeholder_label = ctk.CTkLabel(
+                text_tab, 
+                text="Text Intelligence features are not available.\nPlease check dependencies.",
+                font=ctk.CTkFont(size=14)
+            )
+            placeholder_label.pack(expand=True)
+        except Exception as e:
+            logger.error(f"Failed to create Text Intelligence tab: {e}")
     
     def create_performance_tab(self):
         """Create the performance monitoring tab"""
@@ -828,19 +857,19 @@ class OSRSBotGUI:
   In Combat: {game_state.player_status.is_in_combat}
 
 🗺️ Minimap:
-  NPCs Visible: {len(game_state.minimap.visible_npcs or [])}
-  Players Visible: {len(game_state.minimap.visible_players or [])}
+  NPCs Visible: {len(game_state.minimap.visible_npcs) if game_state.minimap.visible_npcs else 0}
+  Players Visible: {len(game_state.minimap.visible_players) if game_state.minimap.visible_players else 0}
   Region: {game_state.minimap.region_type}
 
 🎒 Inventory:
   Free Slots: {game_state.inventory.free_slots}/28
-  Items: {len(game_state.inventory.items or [])}
-  Valuable Items: {len(game_state.inventory.valuable_items or [])}
+  Items: {len(game_state.inventory.items) if game_state.inventory.items else 0}
+  Valuable Items: {len(game_state.inventory.valuable_items) if game_state.inventory.valuable_items else 0}
 
 💬 Interface:
-  Open Interfaces: {len(game_state.interface_state.open_interfaces or [])}
-  Chat Messages: {len(game_state.interface_state.active_chat or [])}
-  Clickable Elements: {len(game_state.interface_state.clickable_elements or [])}
+  Open Interfaces: {len(game_state.interface_state.open_interfaces) if game_state.interface_state.open_interfaces else 0}
+  Chat Messages: {len(game_state.interface_state.active_chat) if game_state.interface_state.active_chat else 0}
+  Clickable Elements: {len(game_state.interface_state.clickable_elements) if game_state.interface_state.clickable_elements else 0}
 """
             self.game_state_display.delete("0.0", "end")
             self.game_state_display.insert("0.0", state_text)
@@ -848,11 +877,11 @@ class OSRSBotGUI:
             # Update detection statistics
             stats_text = f"""📊 Detection Statistics
 🎯 Objects Detected:
-  NPCs: {len(game_state.npcs or [])}
-  Items: {len(game_state.items or [])}
-  Players: {len(game_state.players or [])}
-  UI Elements: {len(game_state.ui_elements or [])}
-  Environment: {len(game_state.environment or [])}
+  NPCs: {len(game_state.npcs) if game_state.npcs else 0}
+  Items: {len(game_state.items) if game_state.items else 0}
+  Players: {len(game_state.players) if game_state.players else 0}
+  UI Elements: {len(game_state.ui_elements) if game_state.ui_elements else 0}
+  Environment: {len(game_state.environment) if game_state.environment else 0}
 
 🏆 Top Priority Objects:
 """

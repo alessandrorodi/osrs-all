@@ -11,6 +11,16 @@ from typing import List, Dict, Optional, Tuple, Any
 from dataclasses import dataclass
 import logging
 import re
+
+# Fix for newer Pillow versions (10.x) - EasyOCR compatibility
+try:
+    import PIL.Image
+    if not hasattr(PIL.Image, 'ANTIALIAS'):
+        PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+        logging.getLogger(__name__).debug("Applied PIL.Image.ANTIALIAS compatibility fix")
+except ImportError:
+    pass
+
 import easyocr
 import pytesseract
 
